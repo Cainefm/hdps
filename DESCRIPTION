@@ -1,0 +1,22 @@
+Package: hdps
+Type: Package
+Title: A Package for High Dimensional Propensity Score
+Version: 0.1.0
+Authors@R: c(
+    person(given = "Min",
+           family = "Fan",
+           role = c("aut", "cre"),
+           email = "minfan@connect.hku.hk",
+           comment = c(ORCID = "0000-0001-9074-633X")), 
+    person(given = "Edmund",
+           family = "Chueng",
+           role = c("aut"),
+           email = "edmundcc@connect.hku.hk"))
+Description: A Package for High Dimensional Propensity Score.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests: 
+    testthat,
+    knitr
+VignetteBuilder: knitr
