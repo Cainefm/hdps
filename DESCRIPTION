@@ -16,6 +16,9 @@ Description: A Package for High Dimensional Propensity Score.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Depends:
+    data.table,
+    pbapply
 Suggests: 
     testthat,
     knitr

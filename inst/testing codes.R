@@ -38,7 +38,7 @@ usethis::use_version()
 
 
 
-
+library(data.table)
 dx <- read.csv("/Users/fanmin/Desktop/new job/to office PC/MND dummy dataset/seperated files/dummy_dx.csv")
 setDT(dx)
 dx <- dx[,.(id,value=all.diagnosis.code.icd9.)]
