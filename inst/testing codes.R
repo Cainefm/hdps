@@ -41,6 +41,16 @@ usethis::use_version()
 library(data.table)
 dx <- read.csv("/Users/fanmin/Desktop/new job/to office PC/MND dummy dataset/seperated files/dummy_dx.csv")
 setDT(dx)
+dx <- dx[,.(id=id,icd9code=all.diagnosis.code.icd9.)][,pid:=.GRP,id][,.(pid,icd9code)]
+master <- dx[,.(pid=unique(pid),outcome=sample(c(0,1),491,replace = T),exposure=sample(c(0,1),491,replace = T))]
+
+hdpsCohort <- feature_filter(dx,"pid",code = "icd9code",type = "dx")
+hdpsCohort[1:5,1:6]
+
+hdpsCohort<- merge(master,hdpsCohort,by="pid")
+hdpsCohort[1:5,1:5]
+hdps::prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
+
 dx <- dx[,.(id,value=all.diagnosis.code.icd9.)]
 dx[,.(prec=uniqueN(id)/.N),value]
 dx[,.(count=.N),.(id,value)]
