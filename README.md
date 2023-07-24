@@ -1,12 +1,17 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# hdps
+# High-dimensional propensity score (HDPS)
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of hdps is to …
+The primary objective of HDPS is to develop an R-package tailored for
+conducting High-Dimensional Propensity Score (HDPS) analyses in
+epidemiological studies. The initial focus of the project is on the
+CDARS database, a clinical electronic database in Hong Kong.
+Nevertheless, the package is designed to be versatile and can be adapted
+for use with other databases too.
 
 ## Installation
 
@@ -20,10 +25,18 @@ devtools::install_github("Cainefm/hdps")
 
 ## Example
 
+Here we using diagnosis database as an example to illustrate: Diagnosis
+records
+<p align="center">
+<img width="400" src="https://user-images.githubusercontent.com/20833144/147062935-b6d7ab55-aee7-455e-bdf0-b9da26444542.png">
+</p>
+
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
 library(hdps)
+#> Loading required package: data.table
+#> Loading required package: pbapply
 ## basic example code
 ```
 
