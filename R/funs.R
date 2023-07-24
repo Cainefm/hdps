@@ -2,14 +2,16 @@
 feature_filter <- function(dt,id,code,type,rank=NA){
     dt <- copy(dt)
     setDT(dt)
-    setnames(dt,c(id,code),c("id","code"))
-    dcast(
-        melt(merge(dt[,.(count=.N),.(id,code)],
-                     dt[,.(count=.N),.(id,code)][,.(Q2=quantile(count,0.5),Q3=quantile(count,probs = 0.75)),code][,Q3:=ifelse(Q2==Q3,NA,Q3)],
-                     by="code")[,.(once=ifelse(count>=1,1,0),
-                                   spor=ifelse(!is.na(Q2) & count>=Q2,1,0),
-                                   freq=ifelse(!is.na(Q3) & count>=Q3,1,0)),.(id,code)],id.vars = c("id","code"))[,.(id,code_type=paste(type,code,variable,sep="_"),count=value)]
-        ,id~code_type)
+    setnames(dt,c(id,code),c("pid","code"))
+    output <- dcast(
+        melt(merge(dt[,.(count=.N),.(pid,code)],
+                   dt[,.(count=.N),.(pid,code)][,.(Q2=quantile(count,0.5),Q3=quantile(count,probs = 0.75)),code][,Q3:=ifelse(Q2==Q3,NA,Q3)],
+                   by="code")[,.(once=ifelse(count>=1,1,0),
+                                 spor=ifelse(!is.na(Q2) & count>=Q2,1,0),
+                                 freq=ifelse(!is.na(Q3) & count>=Q3,1,0)),.(pid,code)],id.vars = c("pid","code"))[,.(pid,code_type=paste(type,code,variable,sep="_"),count=value)]
+        ,pid~code_type)
+    output[is.na(output)] <- 0
+    return(output)
 }
 
 
@@ -23,16 +25,17 @@ estBiasTable<-function(dt,var1,cova,...){
     return(temp)
 }
 
-estBias <- function(hdpsCohort,cova,expo,outc){
+estBias <- function(hdpsCohort,cova,expo,outc,...){
     setDT(hdpsCohort)
-    e1 <- hdpsCohort[exposed==1,.N]
-    e0 <- hdpsCohort[exposed==0,.N]
-    d1 <- hdpsCohort[outcome==1,.N]
-    d0 <- hdpsCohort[outcome==0,.N]
+    e1 <- hdpsCohort[get(expo)==1,.N]
+    e0 <- hdpsCohort[get(expo)==0,.N]
+    d1 <- hdpsCohort[get(outc)==1,.N]
+    d0 <- hdpsCohort[get(outc)==0,.N]
     n <- hdpsCohort[,.N]
 
-
     temp <- estBiasTable(hdpsCohort,expo,cova)
+    c1 <- temp[c==1,sum(count)]
+    c0 <- n - c1
     e0c1 <- temp[e == 0 & c == 1, count]
     e1c1 <- temp[e == 1 & c == 1, count]
     e0c0 <- temp[e == 0 & c == 0, count]
@@ -71,7 +74,9 @@ estBias <- function(hdpsCohort,cova,expo,outc){
 
 prioritize <- function(dt,type="dx",expo,outc){
     return(rbindlist(pbapply::pblapply(grep(type,colnames(dt),value = T),
-                                       function(x) estBias(dt,x,expo,outc))))
+                                       function(x) estBias(dt,cova = x,
+                                                           expo=expo,
+                                                           outc=outc))))
 }
 
 #prioritize(hdpsCohort,"dx","exposed","outcome")
