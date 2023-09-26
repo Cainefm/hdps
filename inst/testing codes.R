@@ -49,7 +49,8 @@ hdpsCohort[1:5,1:6]
 
 hdpsCohort<- merge(master,hdpsCohort,by="pid")
 hdpsCohort[1:5,1:5]
-hdps::prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
+
+hdpsResult <- prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
 
 dx <- dx[,.(id,value=all.diagnosis.code.icd9.)]
 dx[,.(prec=uniqueN(id)/.N),value]

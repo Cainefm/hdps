@@ -15,9 +15,9 @@ feature_filter <- function(dt,id,code,type,rank=NA){
 }
 
 
-estBiasTable<-function(dt,var1,cova,...){
-    temp<-dt[, .(count = .N), by = c(var1,cova)]
-    setnames(temp,c(var1,cova),c("e","c"))
+estBiasTable<-function(dt,expo,cova,...){
+    temp<-dt[, .(count = .N), by = c(expo,cova)]
+    setnames(temp,c(expo,cova),c("e","c"))
     temp <- merge(temp,
                   CJ(e=c(0,1),c=c(0,1)),by=c("e","c"),
                   all.y=T)
