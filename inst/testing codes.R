@@ -40,6 +40,9 @@ usethis::use_version()
 
 library(data.table)
 dx <- read.csv("/Users/fanmin/Desktop/new job/to office PC/MND dummy dataset/seperated files/dummy_dx.csv")
+dx <- read.csv("D:/OneDrive - connect.hku.hk/Projects/MND Project/9.dummy data for trial/dummy_dx.csv")
+ip <- as.data.table(read.csv("D:/OneDrive - connect.hku.hk/Projects/MND Project/9.dummy data for trial/dummy_ip.csv"))
+
 setDT(dx)
 dx <- dx[,.(id=id,icd9code=all.diagnosis.code.icd9.)][,pid:=.GRP,id][,.(pid,icd9code)]
 master <- dx[,.(pid=unique(pid),outcome=sample(c(0,1),491,replace = T),exposure=sample(c(0,1),491,replace = T))]
