@@ -1,14 +1,41 @@
 
-feature_filter <- function(dt,id,code,type,rank=NA){
+#' recurrent assessment
+#'
+#' @param dt The database including the patient id and codes
+#' @param id The column name of patient identification
+#' @param code The column name of codes
+#' @param type The type of data dimensions, eg. diagnoses, procedures and medication
+#' @param rank The desired number of covariates to include in the model. eg. 500, 1000, Inf, etc
+#'
+#' @return
+#' @export
+#'
+#' @examples
+rec_assess <- function(dt,id,code,type,rank=Inf){
     dt <- copy(dt)
     setDT(dt)
     setnames(dt,c(id,code),c("pid","code"))
+    # catch
+    if(!rank==Inf){
+        count_cutoff <- dt[,.(count=.N),.(pid,code)][order(count,decreasing = T)][rank,count]
+    }else(
+        count_cutoff <- Inf
+    )
+
     output <- dcast(
-        melt(merge(dt[,.(count=.N),.(pid,code)],
-                   dt[,.(count=.N),.(pid,code)][,.(Q2=quantile(count,0.5),Q3=quantile(count,probs = 0.75)),code][,Q3:=ifelse(Q2==Q3,NA,Q3)],
-                   by="code")[,.(once=ifelse(count>=1,1,0),
-                                 spor=ifelse(!is.na(Q2) & count>=Q2,1,0),
-                                 freq=ifelse(!is.na(Q3) & count>=Q3,1,0)),.(pid,code)],id.vars = c("pid","code"))[,.(pid,code_type=paste(type,code,variable,sep="_"),count=value)]
+        melt(merge(dt[,.(count=.N),.(pid,code)][count <= count_cutoff],
+                   dt[,.(count=.N),.(pid,code)][,.(Q1=quantile(count,0.25),
+                                                   Q2=quantile(count,0.5),
+                                                   Q3=quantile(count,0.75)),
+                                                code
+                                                ][,.(code,Q1,Q2=ifelse(Q1==Q2,NA,Q2),
+                                                     Q3=ifelse(Q2==Q3,NA,Q3))],
+                   by="code",
+                   all.x=T)[,.(once=ifelse(count>=1,1,0),
+                                 spor=ifelse(!is.na(Q2) & count>=Q2,1,ifelse(is.na(Q2),as.numeric(NA),0)),
+                                 freq=ifelse(!is.na(Q3) & count>=Q3,1,ifelse(is.na(Q3),as.numeric(NA),0))),
+                              .(pid,code)],
+             id.vars = c("pid","code"))[!is.na(value)][,.(pid,code_type=paste(type,code,variable,sep="_"),count=value)]
         ,pid~code_type)
     output[is.na(output)] <- 0
     return(output)
