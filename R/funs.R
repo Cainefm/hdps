@@ -12,6 +12,21 @@
 #'
 #' @examples
 rec_assess <- function(dt,id,code,type,rank=Inf){
+    if (missing(dt) || !is.data.table(dt) || !is.data.frame(dt)) {
+        stop("'dt' must be provided as a data.frame or data.table")
+    }
+    if (missing(id) || !is.character(id)) {
+        stop("'id' must be the column name of identifier and provided as a character")
+    }
+    if (missing(code) || !is.character(code)) {
+        stop("'code' must be the column name of codes and provided as a character")
+    }
+    if (missing(type) || !is.character(type)) {
+        stop("'type' must be provided as a character")
+    }
+    if (!is.numeric(rank) || !is.infinite(rank)) {
+        stop("'rank' must be provided as a number or Inf")
+    }
     dt <- copy(dt)
     setDT(dt)
     setnames(dt,c(id,code),c("pid","code"))
