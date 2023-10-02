@@ -48,7 +48,7 @@ library(hdps)
 
 ### Generating the prevelence for covariates
 ``` r
-hdpsCohort <- feature_filter(dx,"pid",code = "icd9code",type = "dx")
+hdpsCohort <- rec_assess(dx,"pid",code = "icd9code",type = "dx")
 hdpsCohort[1:5,1:5]
 #   id dx_000_freq dx_000_once dx_000_spor dx_002.3_freq
 #1:  1           0           0           0             0
