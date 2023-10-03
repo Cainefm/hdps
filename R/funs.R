@@ -57,6 +57,17 @@ rec_assess <- function(dt,id,code,type,rank=Inf){
 }
 
 
+#' Estimate the apparent relative risk for one covariate
+#'
+#' @param dt A dataset in data.table format, including
+#' @param expo The column name for exposure or outcome
+#' @param cova The column name for covariates
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
 estBiasTable<-function(dt,expo,cova,...){
     temp<-dt[, .(count = .N), by = c(expo,cova)]
     setnames(temp,c(expo,cova),c("e","c"))
@@ -67,6 +78,18 @@ estBiasTable<-function(dt,expo,cova,...){
     return(temp)
 }
 
+#' ARR Bias estimation for all covariates
+#'
+#' @param hdpsCohort The dataset after recurrent assesemnt in data.table format
+#' @param cova Column name of the desire covariates
+#' @param expo Column name of the desire exposure
+#' @param outc Column name of the desire outcome
+#' @param ...
+#'
+#' @return
+#' @export
+#'
+#' @examples
 estBias <- function(hdpsCohort,cova,expo,outc,...){
     setDT(hdpsCohort)
     e1 <- hdpsCohort[get(expo)==1,.N]
@@ -114,6 +137,17 @@ estBias <- function(hdpsCohort,cova,expo,outc,...){
 # estBias(hdpsCohort,"dx_335.20_once","exposed","outcome")
 # estBias(hdpsCohort,"dx_000_freq","exposed","outcome")
 
+#' For overall ARR estimation
+#'
+#' @param dt Dataset after reccurent assessment in data.table format
+#' @param type The type of the database which will provide a prefix in the column name
+#' @param expo The column name for exposure
+#' @param outc The column name for outcome
+#'
+#' @return
+#' @export
+#'
+#' @examples
 prioritize <- function(dt,type="dx",expo,outc){
     return(rbindlist(pbapply::pblapply(grep(type,colnames(dt),value = T),
                                        function(x) estBias(dt,cova = x,
