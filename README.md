@@ -94,3 +94,16 @@ head(hdpsResult)
 ```
 <img width="885" alt="CleanShot 2023-07-24 at 18 15 37@2x" src="https://github.com/Cainefm/hdps/assets/20833144/55a104ba-b1f4-4bbe-bc00-aac567bcfe93">
 
+
+### Plot for bias
+
+``` r
+library(plotly)
+p <- ggplot(data=hdpsResult, 
+            aes(text=code, x = rrCE, y = rrCD)) +
+    geom_point() +
+    theme_bw()
+
+ggplotly(p)
+```
+![image](https://github.com/Cainefm/hdps/assets/20833144/e3fa7e0b-af0c-4abc-a112-c180e06a38e6)
