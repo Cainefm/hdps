@@ -47,13 +47,26 @@ setDT(dx)
 dx <- dx[,.(id=id,icd9code=all.diagnosis.code.icd9.)][,pid:=.GRP,id][,.(pid,icd9code)]
 master <- dx[,.(pid=unique(pid),outcome=sample(c(0,1),491,replace = T),exposure=sample(c(0,1),491,replace = T))]
 
-hdpsCohort <- feature_filter(dx,"pid",code = "icd9code",type = "dx")
+hdpsCohort <- rec_assess(dx,"pid",code = "icd9code",type = "dx")
 hdpsCohort[1:5,1:6]
 
 hdpsCohort<- merge(master,hdpsCohort,by="pid")
 hdpsCohort[1:5,1:5]
 
 hdpsResult <- prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
+
+library(ggplot2)
+ggplot(data=hdpsResult)+
+    geom_point(aes(rrCE,rrCD))+
+    theme_classic()
+
+library(plotly)
+p <- ggplot(data=hdpsResult,
+            aes(text=code, x = rrCE, y = rrCD)) +
+    geom_point() +
+    theme_bw()
+
+ggplotly(p)
 
 dx <- dx[,.(id,value=all.diagnosis.code.icd9.)]
 dx[,.(prec=uniqueN(id)/.N),value]
