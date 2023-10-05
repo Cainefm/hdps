@@ -112,11 +112,20 @@ estBias <- function(hdpsCohort,cova,expo,outc,...){
     d0c0 <- temp[e == 0 & c == 0, count]
     d1c0 <- temp[e == 1 & c == 0, count]
 
+    if(e0c1 ==0) e0c1 <-0.1
+    if(e1c1 ==0) e0c1 <-0.1
+    if(e0c0 ==0) e0c1 <-0.1
+    if(e1c0 ==0) e0c1 <-0.1
+
+    if(d0c1 ==0) d0c1 <-0.1
+    if(d1c1 ==0) d1c1 <-0.1
+    if(d0c0 ==0) d0c0 <-0.1
+    if(d1c0 ==0) d1c0 <-0.1
+
     pc1 <- e1c1 / e1
     pc0 <- ifelse(e0c1 / e0==0,0.1,e0c1 / e0)
     rrCE <- ifelse(pc1/pc0==0,NA,pc1/pc0)
 
-    if(c1==0){c1<-0.1}
     rrCD <- ifelse((d1c1/c1)/(d1c0/c0)==0,NA,(d1c1/c1)/(d1c0/c0))
 
     bias <- (pc1*(rrCD - 1) + 1)/ (pc0*(rrCD - 1) + 1)

@@ -39,6 +39,7 @@ usethis::use_version()
 
 
 library(data.table)
+library(hdps)
 dx <- read.csv("/Users/fanmin/Desktop/new job/to office PC/MND dummy dataset/seperated files/dummy_dx.csv")
 dx <- read.csv("D:/OneDrive - connect.hku.hk/Projects/MND Project/9.dummy data for trial/dummy_dx.csv")
 ip <- as.data.table(read.csv("D:/OneDrive - connect.hku.hk/Projects/MND Project/9.dummy data for trial/dummy_ip.csv"))
