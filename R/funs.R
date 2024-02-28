@@ -84,13 +84,14 @@ estBiasTable<-function(dt,expo,cova,...){
 #' @param cova Column name of the desire covariates
 #' @param expo Column name of the desire exposure
 #' @param outc Column name of the desire outcome
+#' @param correction When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.
 #' @param ...
 #'
 #' @return
 #' @export
 #'
 #' @examples
-estBias <- function(hdpsCohort,cova,expo,outc,...){
+estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
     setDT(hdpsCohort)
     e1 <- hdpsCohort[get(expo)==1,.N]
     e0 <- hdpsCohort[get(expo)==0,.N]
@@ -112,15 +113,17 @@ estBias <- function(hdpsCohort,cova,expo,outc,...){
     d0c0 <- temp[e == 0 & c == 0, count]
     d1c0 <- temp[e == 1 & c == 0, count]
 
-    if(e0c1 ==0) e0c1 <-0.1
-    if(e1c1 ==0) e1c1 <-0.1
-    if(e0c0 ==0) e0c0 <-0.1
-    if(e1c0 ==0) e1c0 <-0.1
+    if(correction==TRUE){
+        if(e0c1 ==0) e0c1 <-0.1
+        if(e1c1 ==0) e1c1 <-0.1
+        if(e0c0 ==0) e0c0 <-0.1
+        if(e1c0 ==0) e1c0 <-0.1
 
-    if(d0c1 ==0) d0c1 <-0.1
-    if(d1c1 ==0) d1c1 <-0.1
-    if(d0c0 ==0) d0c0 <-0.1
-    if(d1c0 ==0) d1c0 <-0.1
+        if(d0c1 ==0) d0c1 <-0.1
+        if(d1c1 ==0) d1c1 <-0.1
+        if(d0c0 ==0) d0c0 <-0.1
+        if(d1c0 ==0) d1c0 <-0.1
+    }
 
     pc1 <- e1c1 / e1
     pc0 <- ifelse(e0c1 / e0==0,0.1,e0c1 / e0)
@@ -157,11 +160,12 @@ estBias <- function(hdpsCohort,cova,expo,outc,...){
 #' @export
 #'
 #' @examples
-prioritize <- function(dt,type="dx",expo,outc){
+prioritize <- function(dt,type="dx",expo,outc,correction=TRUE){
     return(rbindlist(pbapply::pblapply(grep(type,colnames(dt),value = T),
                                        function(x) estBias(dt,cova = x,
                                                            expo=expo,
-                                                           outc=outc))))
+                                                           outc=outc,
+                                                           correction = correction))))
 }
 
 #prioritize(hdpsCohort,"dx","exposed","outcome")
