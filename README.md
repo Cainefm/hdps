@@ -13,18 +13,9 @@ CDARS database, a clinical electronic database in Hong Kong.
 Nevertheless, the package is designed to be versatile and can be adapted
 for use with other databases too.
 
-## Package installation
+This example utilizes a simulated diagnosis database from the Clinical Data Analysis and Reporting System (CDARS) in the Hong Kong, which is an electronic health records system for public hospitals. By employing this database, we aim to demonstrate the *HDPS* package, and potentially contribute to broader efforts in enhancing other real-world clinical data analysis.
 
-You can install the development version of hdps from
-[GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
-devtools::install_github("Cainefm/hdps")
-```
-
-This example utilize a simulated diagnosis database from the Clinical Data Analysis and Reporting System (CDARS) in the Hong Kong, which is a electronic health records system from public hospitals. By employing this database, we aim to demonstrate the *HDPS* package, and potential contribute to broader efforts in enhancing other real-world clinical data analysis.
-
+## Example dataset 
 ### Master sheet 
 Here is the master sheet for a random sample of 491 pseudo-patients  
 - pid: patient ID  
@@ -35,26 +26,34 @@ Here is the master sheet for a random sample of 491 pseudo-patients
 <img width="178" alt="CleanShot 2023-07-24 at 17 42 54@2x" src="https://github.com/Cainefm/hdps/assets/20833144/4b6cc860-3b26-4dbd-afb2-068f300a5d23">
 </p>
 
-### Diagnosis dataset
-Here is the random simulated diagnosis records (Dx) from the CDARS database.  
+### Diagnosis dataset 
+Here are the random simulated diagnosis records (Dx) from the CDARS database.  
 - pid: patient ID  
-- icd9code: diagnosis code of icd-9-cm before index date for each patient  
+- icd9code: diagnosis code of ICD-9-cm before index date for each patient  
 
 <p align="center">
 <img width="131" alt="CleanShot 2023-07-24 at 17 43 16@2x" src="https://github.com/Cainefm/hdps/assets/20833144/f7bb062f-d347-4615-8a71-61d874557ca1">
 </p>
 
 
+## Package installation  
 
-## Loading the package...  
-Ps.This package harnesses the power of *data.table* for efficient handling of large dataset. 
+You can install the development version of hdps from
+[GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("Cainefm/hdps")
+```
+
+## Loading the package   
+Ps. This package harnesses the power of *data.table* for efficient handling of large datasets. 
 ``` r
 library(hdps)
 #> Loading required package: data.table
 #> Loading required package: pbapply
 ```
-
-1. Generating the prevalence for covariates  
+## Generating the prevalence for covariates  
 ``` r
 hdpsCohort <- rec_assess(dx,"pid",code = "icd9code",type = "dx")
 hdpsCohort[1:5,1:5]
@@ -65,10 +64,9 @@ hdpsCohort[1:5,1:5]
 #4:  4           0           0           0             0
 #5:  5           0           0           0             0
 ```
-<img width="471" alt="CleanShot 2023-07-24 at 17 48 45@2x" src="https://github.com/Cainefm/hdps/assets/20833144/7083ce58-f16b-48a3-8df8-a45a842872e9">
+<p align="center"><img width="471" alt="CleanShot 2023-07-24 at 17 48 45@2x" src="https://github.com/Cainefm/hdps/assets/20833144/7083ce58-f16b-48a3-8df8-a45a842872e9"></p>
 
-
-2. Merge the master sheet with information about covariates prevalence  
+## Merge the master sheet with covariates' prevalence  
 ``` r
 hdpsCohort<- merge(master,hdpsCohort,by="pid")
 hdpsCohort[1:5,1:5]
@@ -79,10 +77,9 @@ hdpsCohort[1:5,1:5]
 #4:   4       0        0           0           0
 #5:   5       1        0           0           0
 ```
-<img width="327" alt="CleanShot 2023-07-24 at 17 56 39@2x" src="https://github.com/Cainefm/hdps/assets/20833144/95be10ff-da06-4aa4-823b-46293de36fbb">
+<p align="center"><img width="327" alt="CleanShot 2023-07-24 at 17 56 39@2x" src="https://github.com/Cainefm/hdps/assets/20833144/95be10ff-da06-4aa4-823b-46293de36fbb"></p>
 
-3. Recurrence Assessment and Prioritization  
-
+## Recurrence Assessment and Prioritization  
 ``` r
 prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
 head(hdpsResult)
@@ -101,23 +98,21 @@ head(hdpsResult)
 #5: 9.421550e-02   0.9601594  1.03319502
 #6: 9.421550e-02   0.9601594  1.03319502
 ```
-<img width="885" alt="CleanShot 2023-07-24 at 18 15 37@2x" src="https://github.com/Cainefm/hdps/assets/20833144/55a104ba-b1f4-4bbe-bc00-aac567bcfe93">
+<p align="center"><img src="https://github.com/Cainefm/hdps/assets/20833144/55a104ba-b1f4-4bbe-bc00-aac567bcfe93"></p>
 
-After obtain the bias score, we can select the number of covariates to be included in the model. The selection can be done using the bias score, the prevalence of the covariates, or the strength of the covariates. 
+## Covariates selection
+After obtaining the bias score, we can select the number of covariates to be included in the model. The selection can be done using the bias score, the prevalence of the covariates, or the strength of the covariates. 
 
 ``` r
 hdpsResult[order(absLogBias,decreasing = T),.SD[1:250]][,code]
-
 # [1] "dx_518.0_once"  "dx_294.8_freq"  "dx_E980.5_once"
 # [4] "dx_428.0_freq"  "dx_883.2_once"  "dx_E928.9_once"
 # [7] "dx_242.90_once" "dx_682.8_once"  "dx_781.9_once" 
 # [10] "dx_943.00_once" "dx_453.8_once"  "dx_536.8_once"
 ```
+<p align="center"><img src="https://github.com/Cainefm/hdps/assets/20833144/78d2699d-6604-4129-b154-41477209b0b8"></p>
 
-
-
-### Bias Diagnostic plot
-
+## Bias diagnostic plot
 ``` r
 library(plotly)
 p <- ggplot(data=hdpsResult, 
@@ -129,4 +124,4 @@ p <- ggplot(data=hdpsResult,
 
 ggplotly(p)
 ```
-![image](https://github.com/Cainefm/hdps/assets/20833144/e3fa7e0b-af0c-4abc-a112-c180e06a38e6)
+<p align="center"><img src="https://github.com/Cainefm/hdps/assets/20833144/1167cdbe-e7fd-4aad-b14f-24dc3f3df910" width="600" height="600"></p>
