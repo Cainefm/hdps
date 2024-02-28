@@ -8,12 +8,10 @@
 
 The primary objective of HDPS is to develop an R-package tailored for
 conducting High-Dimensional Propensity Score (HDPS) analyses in
-epidemiological studies. The initial focus of the project is on the
-CDARS database, a clinical electronic database in Hong Kong.
+epidemiological studies. The initial focus of the project is on the Clinical Data Analysis and Reporting System
+(CDARS) database, a clinical electronic database in Hong Kong.
 Nevertheless, the package is designed to be versatile and can be adapted
 for use with other databases too.
-
-This example utilizes a simulated diagnosis database from the Clinical Data Analysis and Reporting System (CDARS) in the Hong Kong, which is an electronic health records system for public hospitals. By employing this database, we aim to demonstrate the *HDPS* package, and potentially contribute to broader efforts in enhancing other real-world clinical data analysis.
 
 ## Example dataset 
 ### Master sheet 
