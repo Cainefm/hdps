@@ -63,7 +63,7 @@ ggplot(data=hdpsResult)+
 
 library(plotly)
 p <- ggplot(data=hdpsResult,
-            aes(text=code, x = rrCE, y = rrCD)) +
+            aes(text=code, x = rrCD, y = rrCE)) +
     geom_point() +
     theme_bw()
 
@@ -82,4 +82,24 @@ dcast(melt(merge(dx[,.(count=.N),.(id,value)],
                                 spor=ifelse(!is.na(Q2) & count>=Q2,1,0),
                                 freq=ifelse(!is.na(Q3) & count>=Q3,1,0)),.(id,value)],id.vars = c("id","value"))[,.(id,value_type=paste(value,variable,sep="_"),value=value.1)],
       id~value_type)
+
+library(matchit)
+m.ps <- glm(exposure~.,data = hdpsCohort, family="binomial")
+test <- copy(hdpsCohort)
+test$pr_score <- predict(m.ps,type="response")
+ggplot(test)+
+  geom_histogram(aes(x=pr_score, y=..density..,), color="white", bins=30)+
+  scale_x_continuous(limits = c(0.1,0.9))
+  geom_density(aes(x=pr_score))+
+  facet_wrap(~exposure, ncol=1)
+
+ggplot(test)+
+  geom_histogram(aes(x=pr_score, y=..density.., fill=exposure),
+                 color="white", bins=30, position="identity", alpha=.3)+
+  scale_x_continuous(limits = c(0.1,0.9))+
+  geom_density(aes(x=pr_score, color=exposure))
+
+plot(density(df$pscore[df$Near==1]))
+plot(density(df$pscore[df$Near==0]))
+
 
