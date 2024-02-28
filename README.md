@@ -13,7 +13,7 @@ CDARS database, a clinical electronic database in Hong Kong.
 Nevertheless, the package is designed to be versatile and can be adapted
 for use with other databases too.
 
-## Installation
+## Package installation
 
 You can install the development version of hdps from
 [GitHub](https://github.com/) with:
@@ -23,30 +23,38 @@ You can install the development version of hdps from
 devtools::install_github("Cainefm/hdps")
 ```
 
-## Example
+This example utilize a simulated diagnosis database from the Clinical Data Analysis and Reporting System (CDARS) in the Hong Kong, which is a electronic health records system from public hospitals. By employing this database, we aim to demonstrate the *HDPS* package, and potential contribute to broader efforts in enhancing other real-world clinical data analysis.
 
-Here, we are using the diagnosis database as an illustrative example.
+### Master sheet 
+Here is the master sheet for a random sample of 491 pseudo-patients  
+- pid: patient ID  
+- outcome: 0-no outcome and 1-with outcome  
+- exposure: 0-no exposure and 1-with exposure  
+
+<p align="center">
+<img width="178" alt="CleanShot 2023-07-24 at 17 42 54@2x" src="https://github.com/Cainefm/hdps/assets/20833144/4b6cc860-3b26-4dbd-afb2-068f300a5d23">
+</p>
+
+### Diagnosis dataset
+Here is the random simulated diagnosis records (Dx) from the CDARS database.  
+- pid: patient ID  
+- icd9code: diagnosis code of icd-9-cm before index date for each patient  
 
 <p align="center">
 <img width="131" alt="CleanShot 2023-07-24 at 17 43 16@2x" src="https://github.com/Cainefm/hdps/assets/20833144/f7bb062f-d347-4615-8a71-61d874557ca1">
 </p>
 
-In addition to the diagnosis dataset, we have a master sheet that includes exposure and outcome indicators.
-<p align="center">
-<img width="178" alt="CleanShot 2023-07-24 at 17 42 54@2x" src="https://github.com/Cainefm/hdps/assets/20833144/4b6cc860-3b26-4dbd-afb2-068f300a5d23">
-
-</p>
 
 
-### Loading the package...  
-This package harnesses the power of *data.table* for efficient handling of large datasets. But there is no need to be a data.table before using it.
+## Loading the package...  
+Ps.This package harnesses the power of *data.table* for efficient handling of large dataset. 
 ``` r
 library(hdps)
 #> Loading required package: data.table
 #> Loading required package: pbapply
 ```
 
-### Generating the prevelence for covariates
+1. Generating the prevalence for covariates  
 ``` r
 hdpsCohort <- rec_assess(dx,"pid",code = "icd9code",type = "dx")
 hdpsCohort[1:5,1:5]
@@ -60,7 +68,7 @@ hdpsCohort[1:5,1:5]
 <img width="471" alt="CleanShot 2023-07-24 at 17 48 45@2x" src="https://github.com/Cainefm/hdps/assets/20833144/7083ce58-f16b-48a3-8df8-a45a842872e9">
 
 
-### Merge the master sheet with hdps information
+2. Merge the master sheet with information about covariates prevalence  
 ``` r
 hdpsCohort<- merge(master,hdpsCohort,by="pid")
 hdpsCohort[1:5,1:5]
@@ -73,7 +81,8 @@ hdpsCohort[1:5,1:5]
 ```
 <img width="327" alt="CleanShot 2023-07-24 at 17 56 39@2x" src="https://github.com/Cainefm/hdps/assets/20833144/95be10ff-da06-4aa4-823b-46293de36fbb">
 
-### Recurrence Assessment and Prioritization
+3. Recurrence Assessment and Prioritization  
+
 ``` r
 prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
 head(hdpsResult)
@@ -94,17 +103,30 @@ head(hdpsResult)
 ```
 <img width="885" alt="CleanShot 2023-07-24 at 18 15 37@2x" src="https://github.com/Cainefm/hdps/assets/20833144/55a104ba-b1f4-4bbe-bc00-aac567bcfe93">
 
+After obtain the bias score, we can select the number of covariates to be included in the model. The selection can be done using the bias score, the prevalence of the covariates, or the strength of the covariates. 
 
-### Plot for bias
+``` r
+hdpsResult[order(absLogBias,decreasing = T),.SD[1:250]][,code]
+
+# [1] "dx_518.0_once"  "dx_294.8_freq"  "dx_E980.5_once"
+# [4] "dx_428.0_freq"  "dx_883.2_once"  "dx_E928.9_once"
+# [7] "dx_242.90_once" "dx_682.8_once"  "dx_781.9_once" 
+# [10] "dx_943.00_once" "dx_453.8_once"  "dx_536.8_once"
+```
+
+
+
+### Bias Diagnostic plot
 
 ``` r
 library(plotly)
 p <- ggplot(data=hdpsResult, 
             aes(text=code, x = rrCE, y = rrCD)) +
     geom_point() +
-    theme_bw()
+    theme_bw()+
+    labs(x = "Strength of covariate-outcome association",
+         y = "Strength of covariate-exposure association")
 
 ggplotly(p)
 ```
 ![image](https://github.com/Cainefm/hdps/assets/20833144/e3fa7e0b-af0c-4abc-a112-c180e06a38e6)
-{% include a.html %}
