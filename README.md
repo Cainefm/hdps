@@ -107,3 +107,4 @@ p <- ggplot(data=hdpsResult,
 ggplotly(p)
 ```
 ![image](https://github.com/Cainefm/hdps/assets/20833144/e3fa7e0b-af0c-4abc-a112-c180e06a38e6)
+{% include a.html %}
