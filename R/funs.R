@@ -1,16 +1,16 @@
 
-#' recurrent assessment
+#' The recurrence of features is assessed in a pre-exposure period, creating binary covariates based on a set of frequency-based cut-offs.The standard implementation of the HDPS defines three indicators for each patient capturing whether a feature was recorded:larger than once,larger than the median, and larger the75th percentile.
 #'
-#' @param dt The database including the patient id and codes
+#' @title covariate assessment
+#' @param dt A database including the pid and covariates for assessment
 #' @param id The column name of patient identification
-#' @param code The column name of codes
-#' @param type The type of data dimensions, eg. diagnoses, procedures and medication
+#' @param code The column name of codes, eg. ICD-9, ICD-19, Drug Codes, or Lab results
+#' @param type The prefix for output table, indicating type of data dimensions, eg. dx for diagnoses, px for procedures
 #' @param rank The desired number of covariates to include in the model. eg. 500, 1000, Inf, etc
 #'
-#' @return
+#' @return A data.table including the recurrent assessment of the codes
 #' @export
 #'
-#' @examples
 rec_assess <- function(dt,id,code,type,rank=Inf){
     if (missing(dt) || !is.data.table(dt) || !is.data.frame(dt)) {
         stop("'dt' must be provided as a data.frame or data.table")
@@ -64,10 +64,8 @@ rec_assess <- function(dt,id,code,type,rank=Inf){
 #' @param cova The column name for covariates
 #' @param ...
 #'
-#' @return
-#' @export
+#' @return A data.table including the apparent relative risk for one covariate
 #'
-#' @examples
 estBiasTable<-function(dt,expo,cova,...){
     temp<-dt[, .(count = .N), by = c(expo,cova)]
     setnames(temp,c(expo,cova),c("e","c"))
@@ -78,6 +76,8 @@ estBiasTable<-function(dt,expo,cova,...){
     return(temp)
 }
 
+
+
 #' ARR Bias estimation for all covariates
 #'
 #' @param hdpsCohort The dataset after recurrent assesemnt in data.table format
@@ -87,10 +87,8 @@ estBiasTable<-function(dt,expo,cova,...){
 #' @param correction When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.
 #' @param ...
 #'
-#' @return
-#' @export
+#' @return A data.table including the apparent relative risk for one covariates
 #'
-#' @examples
 estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
     setDT(hdpsCohort)
     e1 <- hdpsCohort[get(expo)==1,.N]
@@ -149,160 +147,32 @@ estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
 # estBias(hdpsCohort,"dx_335.20_once","exposed","outcome")
 # estBias(hdpsCohort,"dx_000_freq","exposed","outcome")
 
-#' For overall ARR estimation
-#'
+
+#' @title Calculate the apparent relative risk for all covariates
+#' Prioritise the large pool of covariates generated in the previous step is prioritised. This is typically achieved using the Bross formula, which uses univariate associations of covariates with treatment and outcome, to identify those with the highest potential tobias the treatment-outcome relationship
 #' @param dt Dataset after reccurent assessment in data.table format
-#' @param type The type of the database which will provide a prefix in the column name
 #' @param expo The column name for exposure
 #' @param outc The column name for outcome
+#' @param cova The column name for covariates included for ARR estimation. This can be omit if \emph{cova_exc} is used to include all columns except pre-defined columns.
+#' @param cova_exc The column name for covariates excluded for ARR estimation if all columns except the defined columns.
+#' @param correction When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.
 #'
-#' @return
+#' @return A data.table including the apparent relative risk for all covariates
 #' @export
 #'
-#' @examples
-prioritize <- function(dt,type="dx",expo,outc,correction=TRUE){
-    return(rbindlist(pbapply::pblapply(grep(type,colnames(dt),value = T),
+prioritize <- function(dt,expo,outc,cova,cova_exc,correction=TRUE){
+    if(missing(cova)){
+        if(missing(cova_exc)){
+            stop("Please provide covarites included for the prioritizing~")
+        }else{
+            cova <- setdiff(colnames(dt),c(cova_exc))
+        }
+
+    }
+    return(rbindlist(pbapply::pblapply(cova,
                                        function(x) estBias(dt,cova = x,
                                                            expo=expo,
                                                            outc=outc,
                                                            correction = correction))))
 }
-
-#prioritize(hdpsCohort,"dx","exposed","outcome")
-
-#
-# feature_filter(dx,"id","all.diagnosis.code.icd9.","dx")
-#
-# saveRDS(feature_filter(dx,"id","all.diagnosis.code.icd9.","dx"),"~/Documents/abc.rds")
-#
-# prioritation <- function(hdps){
-#
-#     hdpsCohort <- hdpsCohort %>%
-#         replace(is.na(.), 0)
-#
-#     vars <- colnames(hdpsCohort[, !names(hdpsCohort) %in% c("patid", "indexdate", "exposed", "outcome")])
-#
-#     e1 <- nrow(hdpsCohort %>% filter(exposed == 1 ))
-#     e0 <- nrow(hdpsCohort %>% filter(exposed == 0))
-#     d1 <- nrow(hdpsCohort %>% filter(outcome == 1))
-#     d0 <- nrow(hdpsCohort %>% filter(outcome == 0 ))
-#     n <- nrow(hdpsCohort)
-#
-#     biasInfo <- data.frame(
-#         code = as.character(),
-#         e1 =  as.numeric(),
-#         e0 =  as.numeric(),
-#         d1 =  as.numeric(),
-#         d0 =  as.numeric(),
-#         c1 =  as.numeric(),
-#         c0 =  as.numeric(),
-#         e1c1 =  as.numeric(),
-#         e0c1 =  as.numeric(),
-#         e1c0 =  as.numeric(),
-#         e0c0 =  as.numeric(),
-#         d1c1 =  as.numeric(),
-#         d0c1 =  as.numeric(),
-#         d1c0 =  as.numeric(),
-#         d0c0 =  as.numeric(),
-#         pc1 =  as.numeric(),
-#         pc0 =  as.numeric(),
-#         rrCE =  as.numeric(),
-#         rrCD =  as.numeric(),
-#         bias =  as.numeric(),
-#         absLogBias =  as.numeric(),
-#         ceStrength =  as.numeric(),
-#         cdStrength =  as.numeric()
-#     )
-#
-#     counter <- 0
-#     for(v in vars){
-#         counter <- counter + 1
-#         if (counter %% 50 == 0) {
-#             print(paste0("Started generation of bias information for code ", counter, ", out of ", length(vars) ))
-#         }
-#
-#         invisible(capture.output (
-#             tempFrameEx <- hdpsCohort %>%
-#                 dplyr::select(exposed, outcome,all_of(v) ) %>%
-#                 rename(code := paste(all_of(v))) %>%
-#                 group_by(exposed) %>%
-#                 summarise(sum = sum(code)) %>%
-#                 ungroup()
-#         ))
-#         c1 <- as.numeric(tempFrameEx[2,2])  + as.numeric(tempFrameEx[1,2])
-#         c0 <- n - c1
-#         e1c1 <- as.numeric(tempFrameEx[2, 2])
-#         e0c1 <- as.numeric(tempFrameEx[1, 2])
-#         e1c0 <- e1 - e1c1
-#         e0c0 <- e0 - e0c1
-#
-#         invisible(capture.output(
-#             tempFrameOut <- hdpsCohort %>%
-#                 dplyr::select(exposed, outcome,all_of(v) ) %>%
-#                 rename(code := paste(all_of(v))) %>%
-#                 group_by(outcome) %>%
-#                 summarise(sum = sum(code)) %>%
-#                 ungroup()
-#         ))
-#
-#
-#         d1c1 <- as.numeric(tempFrameOut[2, 2])
-#         d0c1 <- as.numeric(tempFrameOut[1, 2])
-#         d1c0 <- d1 - d1c1
-#         d0c0 <- d0 - d0c1
-#
-#         pc1 <- e1c1 / e1
-#         pc0 <- e0c1 / e0
-#
-#         rrCE <- pc1/pc0
-#
-#         if (rrCE == 0) {
-#             rrCE <- NA
-#         }
-#
-#
-#         rrCD <- (d1c1/c1)/(d1c0/c0)
-#
-#         if (rrCD == 0) {
-#             rrCD <- NA
-#         }
-#
-#         bias <- (pc1*(rrCD - 1) + 1)/ (pc0*(rrCD - 1) + 1)
-#
-#         absLogBias <- abs(log(bias))
-#
-#         ce_strength <- abs(rrCE-1)
-#         cd_strength <- abs(rrCD-1)
-#
-#
-#         biasInfo <- biasInfo %>%
-#             add_row(
-#                 code := paste(all_of(v)),
-#                 e1 =  e1,
-#                 e0 =  e0,
-#                 d1 =  d1,
-#                 d0 =  d0,
-#                 c1 =  c1,
-#                 c0 =  c0,
-#                 e1c1 =  e1c1,
-#                 e0c1 = e0c1,
-#                 e1c0 = e1c0,
-#                 e0c0 = e0c0,
-#                 d1c1 = d1c1,
-#                 d0c1 = d0c1,
-#                 d1c0 = d1c0,
-#                 d0c0 = d0c0,
-#                 pc1 =  pc1,
-#                 pc0 =  pc0,
-#                 rrCE = rrCE,
-#                 rrCD = rrCD,
-#                 bias = bias ,
-#                 absLogBias =  absLogBias,
-#                 ceStrength =  ce_strength,
-#                 cdStrength =  cd_strength
-#             )
-#
-#
-#     }
-# }
 

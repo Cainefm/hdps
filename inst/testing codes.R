@@ -32,8 +32,7 @@ sample()
 
 
 
-# 升级版本号
-usethis::use_version()
+
 
 
 
@@ -54,7 +53,9 @@ hdpsCohort[1:5,1:6]
 hdpsCohort<- merge(master,hdpsCohort,by="pid")
 hdpsCohort[1:5,1:5]
 
-hdpsResult <- prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
+hdpsResult <- prioritize(hdpsCohort,
+                         cova_exc = c("id","exposure","outcome"),
+                         expo = "exposure",outc = "outcome")
 
 library(ggplot2)
 ggplot(data=hdpsResult)+
@@ -103,3 +104,7 @@ plot(density(df$pscore[df$Near==1]))
 plot(density(df$pscore[df$Near==0]))
 
 
+
+roxygen2::roxygenize()
+# 升级版本号
+usethis::use_version()
