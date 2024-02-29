@@ -1,7 +1,7 @@
 Package: hdps
 Type: Package
 Title: A Package for High Dimensional Propensity Score
-Version: 0.6.1
+Version: 0.6.2
 Authors@R: c(
     person(given = "Min",
            family = "Fan",
