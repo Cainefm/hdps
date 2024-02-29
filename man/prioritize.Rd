@@ -2,8 +2,7 @@
 % Please edit documentation in R/funs.R
 \name{prioritize}
 \alias{prioritize}
-\title{Calculate the apparent relative risk for all covariates
-Prioritise the large pool of covariates generated in the previous step is prioritised. This is typically achieved using the Bross formula, which uses univariate associations of covariates with treatment and outcome, to identify those with the highest potential tobias the treatment-outcome relationship}
+\title{Calculate the apparent relative risk for all covariates}
 \usage{
 prioritize(dt, expo, outc, cova, cova_exc, correction = TRUE)
 }
@@ -24,6 +23,5 @@ prioritize(dt, expo, outc, cova, cova_exc, correction = TRUE)
 A data.table including the apparent relative risk for all covariates
 }
 \description{
-Calculate the apparent relative risk for all covariates
 Prioritise the large pool of covariates generated in the previous step is prioritised. This is typically achieved using the Bross formula, which uses univariate associations of covariates with treatment and outcome, to identify those with the highest potential tobias the treatment-outcome relationship
 }

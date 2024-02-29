@@ -148,8 +148,8 @@ estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
 # estBias(hdpsCohort,"dx_000_freq","exposed","outcome")
 
 
-#' @title Calculate the apparent relative risk for all covariates
 #' Prioritise the large pool of covariates generated in the previous step is prioritised. This is typically achieved using the Bross formula, which uses univariate associations of covariates with treatment and outcome, to identify those with the highest potential tobias the treatment-outcome relationship
+#' @title Calculate the apparent relative risk for all covariates
 #' @param dt Dataset after reccurent assessment in data.table format
 #' @param expo The column name for exposure
 #' @param outc The column name for outcome

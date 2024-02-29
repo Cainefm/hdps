@@ -11,6 +11,10 @@ use_mit_license()
 devtools::check()
 
 
+roxygen2::roxygenize()
+# 升级版本号
+usethis::use_version()
+
 # devtools::build()
 
 
@@ -104,7 +108,3 @@ plot(density(df$pscore[df$Near==1]))
 plot(density(df$pscore[df$Near==0]))
 
 
-
-roxygen2::roxygenize()
-# 升级版本号
-usethis::use_version()
