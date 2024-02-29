@@ -165,7 +165,7 @@ prioritize <- function(dt,expo,outc,cova,cova_exc,correction=TRUE){
         if(missing(cova_exc)){
             stop("Please provide covarites included for the prioritizing~")
         }else{
-            cova <- setdiff(colnames(dt),c(cova_exc))
+            cova <- setdiff(colnames(dt),c(cova_exc,expo,outc))
         }
 
     }
