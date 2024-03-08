@@ -156,22 +156,14 @@ estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
 #' @param dt Dataset after reccurent assessment in data.table format
 #' @param expo The column name for exposure
 #' @param outc The column name for outcome
-#' @param cova The column name for covariates included for ARR estimation. This can be omit if \emph{cova_exc} is used to include all columns except pre-defined columns.
-#' @param cova_exc The column name for covariates excluded for ARR estimation if all columns except the defined columns.
 #' @param correction When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.
 #'
 #' @return A data.table including the apparent relative risk for all covariates
 #' @export
 #'
-prioritize <- function(dt,expo,outc,cova,cova_exc,correction=TRUE){
-    if(missing(cova)){
-        if(missing(cova_exc)){
-            stop("Please provide covarites included for the prioritizing~")
-        }else{
-            cova <- setdiff(colnames(dt),c(cova_exc,expo,outc))
-        }
+prioritize <- function(dt,expo,outc,correction=TRUE){
+    cova <- setdiff(colnames(dt),c(expo,outc))
 
-    }
     return(rbindlist(pbapply::pblapply(cova,
                                        function(x) estBias(dt,cova = x,
                                                            expo=expo,
