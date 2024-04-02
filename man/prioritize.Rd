@@ -4,18 +4,16 @@
 \alias{prioritize}
 \title{Calculate the apparent relative risk for all covariates}
 \usage{
-prioritize(dt, expo, outc, cova, cova_exc, correction = TRUE)
+prioritize(dt, pid, expo, outc, correction = TRUE)
 }
 \arguments{
 \item{dt}{Dataset after reccurent assessment in data.table format}
 
+\item{pid}{The column name for patient ID}
+
 \item{expo}{The column name for exposure}
 
 \item{outc}{The column name for outcome}
-
-\item{cova}{The column name for covariates included for ARR estimation. This can be omit if \emph{cova_exc} is used to include all columns except pre-defined columns.}
-
-\item{cova_exc}{The column name for covariates excluded for ARR estimation if all columns except the defined columns.}
 
 \item{correction}{When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.}
 }

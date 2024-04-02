@@ -108,3 +108,23 @@ plot(density(df$pscore[df$Near==1]))
 plot(density(df$pscore[df$Near==0]))
 
 
+library(data.table)
+library(hdps)
+# dx <- read.csv("/Users/fanmin/Desktop/new job/to office PC/MND dummy dataset/seperated files/dummy_dx.csv")
+# dx <- read.csv("D:/OneDrive - connect.hku.hk/Projects/MND Project/9.dummy data for trial/dummy_dx.csv")
+dx <- readRDS("M:/Personal/Edmund Cheung/HDPS/cohort_all_rec_arb.rds")
+# ip <- as.data.table(read.csv("D:/OneDrive - connect.hku.hk/Projects/MND Project/9.dummy data for trial/dummy_ip.csv"))
+
+setDT(dx)
+# dx <- dx[,.(id=id,icd9code=all.diagnosis.code.icd9.)][,pid:=.GRP,id][,.(pid,icd9code)]
+# master <- dx[,.(pid=unique(pid),outcome=sample(c(0,1),491,replace = T),exposure=sample(c(0,1),491,replace = T))]
+#
+# hdpsCohort <- rec_assess(dx,"patient_pssn",code = "icpc",type = "dx")
+# hdpsCohort[1:5,1:6]
+#
+# # remove the stupid columsn in pacakge
+dx <- dx[,`:=`(class=NULL,fu=NULL)]
+
+prioritize(dx,pid="patient_pssn",expo = "exposed",outc = "outcome")
+
+
