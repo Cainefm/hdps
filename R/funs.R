@@ -110,15 +110,14 @@ estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
     d1c1 <- temp[e == 1 & c == 1, count]
     d0c0 <- temp[e == 0 & c == 0, count]
     d1c0 <- temp[e == 1 & c == 0, count]
-
     if(correction==TRUE){
-        if(e0c1 * e1c1 * e0c0 *e1c0==0){
+        if(e0c1 ==0|e1c1==0|e0c0==0|e1c0==0){
             e0c1 <- e0c1 + 0.1
             e1c1 <- e1c1 + 0.1
             e0c0 <- e0c0 + 0.1
             e1c0 <- e1c0 + 0.1
         }
-        if(d0c1 * d1c1 * d0c0 * d1c0 == 0){
+        if(d0c1==0|d1c1==0|d0c0==0|d1c0 == 0){
             d0c1 <- d0c1 + 0.1
             d1c1 <- d1c1 + 0.1
             d0c0 <- d0c0 + 0.1
@@ -153,7 +152,9 @@ estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
 
 #' Prioritise the large pool of covariates generated in the previous step is prioritised. This is typically achieved using the Bross formula, which uses univariate associations of covariates with treatment and outcome, to identify those with the highest potential tobias the treatment-outcome relationship
 #' @title Calculate the apparent relative risk for all covariates
+#'
 #' @param dt Dataset after reccurent assessment in data.table format
+#' @param pid The column name for patient ID
 #' @param expo The column name for exposure
 #' @param outc The column name for outcome
 #' @param correction When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.
@@ -161,11 +162,12 @@ estBias <- function(hdpsCohort,cova,expo,outc,correction=TRUE,...){
 #' @return A data.table including the apparent relative risk for all covariates
 #' @export
 #'
-prioritize <- function(dt,expo,outc,correction=TRUE){
-    cova <- setdiff(colnames(dt),c(expo,outc))
+prioritize <- function(dt,pid,expo,outc,correction=TRUE){
+    cova <- setdiff(colnames(dt),c(expo,outc,pid))
 
     return(rbindlist(pbapply::pblapply(cova,
-                                       function(x) estBias(dt,cova = x,
+                                       function(x) estBias(dt,
+                                                           cova = x,
                                                            expo=expo,
                                                            outc=outc,
                                                            correction = correction))))
