@@ -1,125 +1,211 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # High-dimensional propensity score (HDPS)
 
-<!-- badges: start -->
-<!-- badges: end -->
+[![R-CMD-check](https://github.com/Cainefm/hdps/workflows/R-CMD-check/badge.svg)](https://github.com/Cainefm/hdps/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CRAN status](https://www.r-pkg.org/badges/version/hdps)](https://CRAN.R-project.org/package=hdps)
 
-The primary objective of HDPS is to develop an R-package tailored for
-conducting High-Dimensional Propensity Score (HDPS) analyses in
-epidemiological studies. The initial focus of the project is on the Clinical Data Analysis and Reporting System
-(CDARS) database, a clinical electronic database in Hong Kong.
-Nevertheless, the package is designed to be versatile and can be adapted
-for use with other databases too.
+A comprehensive R package for conducting High-Dimensional Propensity Score (HDPS) analyses in epidemiological studies. This package implements the HDPS algorithm with modern R practices, enhanced performance, and user-friendly features.
 
-## Example dataset 
-### Master sheet 
-Here is the master sheet for a random sample of 491 pseudo-patients  
-- pid: patient ID  
-- outcome: 0-no outcome and 1-with outcome  
-- exposure: 0-no exposure and 1-with exposure  
+## ✨ Key Features
 
-<p align="center">
-<img width="178" alt="CleanShot 2023-07-24 at 17 42 54@2x" src="https://github.com/Cainefm/hdps/assets/20833144/4b6cc860-3b26-4dbd-afb2-068f300a5d23">
-</p>
+- **🚀 Modular 3-step workflow**: Identify candidates → Assess recurrence → Prioritize covariates
+- **🏥 Domain-specific handling**: Support for diagnosis (dx), procedures (px), and medications (rx)
+- **⚡ Parallel processing**: Optional parallel processing for large datasets
+- **📊 Enhanced visualizations**: Interactive plots for bias analysis and covariate relationships
+- **🔄 Flexible data input**: Support for various data formats (long, wide, matrix)
+- **🧪 Comprehensive testing**: Full test coverage with testthat
+- **📱 Interactive Shiny app**: User-friendly interface for covariate selection
+- **📚 Complete documentation**: Comprehensive vignettes and examples
 
-### Diagnosis dataset 
-Here are the random simulated diagnosis records (Dx) from the CDARS database.  
-- pid: patient ID  
-- icd9code: diagnosis code of ICD-9-cm before index date for each patient  
+## 📦 Installation
 
-<p align="center">
-<img width="131" alt="CleanShot 2023-07-24 at 17 43 16@2x" src="https://github.com/Cainefm/hdps/assets/20833144/f7bb062f-d347-4615-8a71-61d874557ca1">
-</p>
-
-
-## Package installation  
-
-You can install the development version of hdps from
-[GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
+### From GitHub (Development Version)
+```r
+# Install from GitHub
 devtools::install_github("Cainefm/hdps")
 ```
 
-## Loading the package   
-Ps. This package harnesses the power of *data.table* for efficient handling of large datasets. 
-``` r
+### From Local Package File
+```r
+# Install from .tar.gz file
+install.packages("hdps_0.9.0.tar.gz", repos = NULL, type = "source")
+```
+
+### Dependencies
+The package requires the following R packages:
+- `data.table` - For efficient data manipulation
+- `pbapply` - For progress bars
+- `parallel` - For parallel processing
+- `ggplot2` - For visualizations (suggested)
+- `plotly` - For interactive plots (suggested)
+- `shiny` - For interactive app (suggested)
+
+## 🚀 Quick Start
+
+### Basic Usage
+```r
 library(hdps)
-#> Loading required package: data.table
-#> Loading required package: pbapply
-```
-## Generating the prevalence for covariates  
-``` r
-hdpsCohort <- rec_assess(dx,"pid",code = "icd9code",type = "dx")
-hdpsCohort[1:5,1:5]
-#   id dx_000_freq dx_000_once dx_000_spor dx_002.3_freq
-#1:  1           0           0           0             0
-#2:  2           0           0           0             0
-#3:  3           0           0           0             0
-#4:  4           0           0           0             0
-#5:  5           0           0           0             0
-```
-<p align="center"><img width="471" alt="CleanShot 2023-07-24 at 17 48 45@2x" src="https://github.com/Cainefm/hdps/assets/20833144/7083ce58-f16b-48a3-8df8-a45a842872e9"></p>
+library(data.table)
 
-## Merge the master sheet with covariates' prevalence  
-``` r
-hdpsCohort<- merge(master,hdpsCohort,by="pid")
-hdpsCohort[1:5,1:5]
-#   pid outcome exposure dx_000_freq dx_000_once
-#1:   1       0        0           0           0
-#2:   2       0        1           0           0
-#3:   3       1        1           0           0
-#4:   4       0        0           0           0
-#5:   5       1        0           0           0
+# Load your data
+data(dx)  # Example diagnosis data
+data(master)  # Example master table with exposure/outcome
+
+# Complete HDPS workflow in one function
+results <- hdps_screen(
+  data = dx,
+  id_col = "pid",
+  code_col = "icd9code", 
+  exposure_col = "exposure",
+  outcome_col = "outcome",
+  n_candidates = 200,
+  min_patients = 10
+)
+
+# View results
+head(results$prioritization)
 ```
-<p align="center"><img width="327" alt="CleanShot 2023-07-24 at 17 56 39@2x" src="https://github.com/Cainefm/hdps/assets/20833144/95be10ff-da06-4aa4-823b-46293de36fbb"></p>
 
-## Recurrence Assessment and Prioritization  
-``` r
-prioritize(hdpsCohort,type = "dx",expo = "exposure",outc = "outcome")
-head(hdpsResult)
-#            code  e1  e0  d1  d0  c1  c0 e1c1 e0c1 e1c0 e0c0 d1c1 d0c1 d1c0 d0c0         pc1         pc0       rrCE     rrCD      #bias
-#1:   dx_000_freq 251 240 242 249 1.0 490    1    0  250  240    1    0  241  249 0.003984064 0.100000000 0.03984064 2.033195 #0.9100866
-#2:   dx_000_once 251 240 242 249 2.0 489    1    1  250  239    1    1  241  248 0.003984064 0.004166667 0.95617530 1.014523 #0.9999973
-#3:   dx_000_spor 251 240 242 249 1.0 490    1    0  250  240    1    0  241  249 0.003984064 0.100000000 0.03984064 2.033195 #0.9100866
-#4: dx_002.3_freq 251 240 242 249 0.1 491    0    0  251  240    0    0  242  249 0.000000000 0.100000000         NA       NA       # NA
-#5: dx_002.3_once 251 240 242 249 1.0 490    1    0  250  240    1    0  241  249 0.003984064 0.100000000 0.03984064 2.033195 #0.9100866
-#6: dx_002.3_spor 251 240 242 249 1.0 490    1    0  250  240    1    0  241  249 0.003984064 0.100000000 0.03984064 2.033195 #0.9100866
-#     absLogBias ce_strength cd_strength
-#1: 9.421550e-02   0.9601594  1.03319502
-#2: 2.651753e-06   0.0438247  0.01452282
-#3: 9.421550e-02   0.9601594  1.03319502
-#4:           NA          NA          NA
-#5: 9.421550e-02   0.9601594  1.03319502
-#6: 9.421550e-02   0.9601594  1.03319502
+### Modular 3-Step Workflow
+```r
+# Step 1: Identify candidate covariates
+candidates <- identify_candidates(dx, "pid", "icd9code", "dx", n = 200, min_patients = 10)
+
+# Step 2: Assess recurrence patterns
+recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
+
+# Step 3: Prioritize covariates
+cohort_data <- merge(recurrence, master, by = "pid", all.x = TRUE)
+prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 ```
-<p align="center"><img src="https://github.com/Cainefm/hdps/assets/20833144/55a104ba-b1f4-4bbe-bc00-aac567bcfe93"></p>
 
-## Covariates selection
-After obtaining the bias score, we can select the number of covariates to be included in the model. The selection can be done using the bias score, the prevalence of the covariates, or the strength of the covariates. 
-
-``` r
-hdpsResult[order(absLogBias,decreasing = T),.SD[1:250]][,code]
-# [1] "dx_518.0_once"  "dx_294.8_freq"  "dx_E980.5_once"
-# [4] "dx_428.0_freq"  "dx_883.2_once"  "dx_E928.9_once"
-# [7] "dx_242.90_once" "dx_682.8_once"  "dx_781.9_once" 
-# [10] "dx_943.00_once" "dx_453.8_once"  "dx_536.8_once"
+### Interactive Analysis
+```r
+# Launch interactive Shiny app
+hdps_interactive()
 ```
-<p align="center"><img src="https://github.com/Cainefm/hdps/assets/20833144/78d2699d-6604-4129-b154-41477209b0b8"></p>
 
-## Bias diagnostic plot
-``` r
-library(plotly)
-p <- ggplot(data=hdpsResult, 
-            aes(text=code, x = rrCE, y = rrCD)) +
-    geom_point() +
-    theme_bw()+
-    labs(x = "Strength of covariate-outcome association",
-         y = "Strength of covariate-exposure association")
+## 📊 Enhanced Visualizations
 
-ggplotly(p)
+### Bias Distribution Plot
+```r
+# Plot top covariates by bias
+plot_bias_distribution(prioritization, top_n = 20)
 ```
-<p align="center"><img src="https://github.com/Cainefm/hdps/assets/20833144/1167cdbe-e7fd-4aad-b14f-24dc3f3df910" width="600" height="600"></p>
+
+### Covariate Strength Relationships
+```r
+# Plot CE vs CD strength relationships
+plot_covariate_strength(prioritization)
+```
+
+### Interactive Plots
+```r
+# Create interactive plots
+plot_bias_distribution(prioritization, interactive = TRUE)
+plot_covariate_strength(prioritization, interactive = TRUE)
+```
+
+## 🏥 Multi-Domain Analysis
+
+```r
+# Analyze multiple domains (diagnosis, procedures, medications)
+data_list <- list(
+  dx = dx_data,    # Diagnosis data
+  px = px_data,    # Procedure data  
+  rx = rx_data     # Medication data
+)
+
+multi_results <- hdps_multi_domain(
+  data_list = data_list,
+  id_col = "pid",
+  code_col = "code",
+  exposure_col = "exposure", 
+  outcome_col = "outcome"
+)
+```
+
+## ⚡ Performance Optimization
+
+### Parallel Processing
+```r
+# Use parallel processing for large datasets
+prioritization <- prioritize(
+  cohort_data, 
+  "pid", "exposure", "outcome",
+  parallel = TRUE,
+  n_cores = 4
+)
+```
+
+### Flexible Data Input
+```r
+# Support for different data formats
+data_long <- hdps_input(data, format = "long")      # Long format
+data_wide <- hdps_input(data, format = "wide")      # Wide format  
+data_matrix <- hdps_input(data, format = "matrix")  # Matrix format
+```
+
+## 📚 Documentation
+
+- **Complete Tutorial**: See `vignette("hdps-tutorial")` for comprehensive examples
+- **Function Reference**: All functions are fully documented with examples
+- **Interactive App**: Use `hdps_interactive()` for user-friendly analysis
+
+## 🧪 Testing
+
+The package includes comprehensive tests:
+```r
+# Run tests
+library(testthat)
+test_package("hdps")
+```
+
+## 🔧 Advanced Features
+
+### Custom Parameters
+```r
+# Fine-tune analysis parameters
+results <- hdps_screen(
+  data = dx,
+  id_col = "pid",
+  code_col = "icd9code",
+  exposure_col = "exposure", 
+  outcome_col = "outcome",
+  n_candidates = 500,        # More candidates
+  min_patients = 20,         # Higher threshold
+  parallel = TRUE,           # Use parallel processing
+  n_cores = 8,              # Use 8 cores
+  correction = TRUE          # Apply rare outcome correction
+)
+```
+
+### Quality Control
+```r
+# Check data quality
+summary(results$candidates$candidates)
+summary(results$prioritization)
+```
+
+## 📖 Citation
+
+If you use this package in your research, please cite:
+
+```r
+citation("hdps")
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Based on the HDPS algorithm by Schneeweiss et al. (2009)
+- Inspired by the original `lendle/hdps` and `autoCovariateSelection` packages
+- Built with modern R practices using `data.table`, `testthat`, and `roxygen2`

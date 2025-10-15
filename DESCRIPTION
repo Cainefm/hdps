@@ -1,7 +1,7 @@
 Package: hdps
 Type: Package
 Title: A Package for High Dimensional Propensity Score
-Version: 0.9.0
+Version: 0.9.1
 Authors@R: c(
     person(given = "Min",
            family = "Fan",
@@ -18,11 +18,13 @@ Encoding: UTF-8
 LazyData: true
 Depends:
     data.table,
-    pbapply
+    pbapply,
+    parallel
 Suggests: 
     testthat,
     knitr,
     ggplot2,
-    plotly
-VignetteBuilder: knitr
+    plotly,
+    pryr
+# VignetteBuilder: knitr
 RoxygenNote: 7.2.3

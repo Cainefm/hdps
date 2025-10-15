@@ -1,0 +1,345 @@
+---
+title: "HDPS Package Tutorial"
+author: "Min Fan, Edmund Chueng"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+vignette: >
+  %\VignetteIndexEntry{HDPS Package Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 8,
+  fig.height = 6
+)
+```
+
+# Introduction
+
+The `hdps` package implements the High-Dimensional Propensity Score (HDPS) algorithm for automated covariate selection in observational studies. This tutorial demonstrates the key features and workflows of the package.
+
+## Key Features
+
+- **Modular 3-step workflow**: Identify candidates → Assess recurrence → Prioritize covariates
+- **Domain-specific handling**: Support for diagnosis (dx), procedures (px), and medications (rx)
+- **Parallel processing**: Optional parallel processing for large datasets
+- **Enhanced visualizations**: Interactive plots for bias analysis
+- **Flexible data input**: Support for various data formats
+- **Comprehensive testing**: Full test coverage with testthat
+
+# Installation
+
+```{r installation, eval=FALSE}
+# Install from GitHub
+devtools::install_github("Cainefm/hdps")
+
+# Or install from local .tar.gz file
+install.packages("hdps_0.9.0.tar.gz", repos = NULL, type = "source")
+```
+
+# Basic Usage
+
+## Load the Package
+
+```{r load-package}
+library(hdps)
+library(data.table)
+library(ggplot2)
+```
+
+## Example Dataset
+
+Let's create a sample dataset to demonstrate the package functionality:
+
+```{r create-sample-data}
+# Create sample diagnosis data
+set.seed(123)
+n_patients <- 100
+n_codes <- 50
+
+# Generate patient IDs and diagnosis codes
+dx_data <- data.table(
+  pid = rep(1:n_patients, each = n_codes),
+  code = rep(paste0("ICD", sprintf("%03d", 1:n_codes)), n_patients),
+  type = "dx"
+)
+
+# Add some variation - not all patients have all codes
+dx_data <- dx_data[sample(nrow(dx_data), nrow(dx_data) * 0.3), ]
+
+# Create master table with exposure and outcome
+master_data <- data.table(
+  pid = 1:n_patients,
+  exposure = rbinom(n_patients, 1, 0.5),
+  outcome = rbinom(n_patients, 1, 0.3)
+)
+
+# Merge with exposure/outcome data
+dx_data <- merge(dx_data, master_data, by = "pid", all.x = TRUE)
+
+head(dx_data)
+```
+
+## Step 1: Identify Candidate Covariates
+
+```{r identify-candidates}
+# Identify candidate covariates
+candidates <- identify_candidates(
+  dx_data, 
+  id = "pid", 
+  code = "code", 
+  type = "dx",
+  n = 20,  # Maximum 20 candidates
+  min_patients = 5  # Minimum 5 patients per code
+)
+
+# View candidates
+head(candidates$candidates)
+```
+
+## Step 2: Assess Recurrence
+
+```{r assess-recurrence}
+# Assess recurrence patterns
+recurrence <- assess_recurrence(
+  candidates$data, 
+  id = "pid", 
+  code = "code", 
+  type = "dx"
+)
+
+# View recurrence data
+head(recurrence)
+```
+
+## Step 3: Prioritize Covariates
+
+```{r prioritize}
+# Merge with exposure/outcome data
+cohort_data <- merge(recurrence, master_data, by = "pid", all.x = TRUE)
+
+# Prioritize covariates
+prioritization <- prioritize(
+  cohort_data, 
+  pid = "pid", 
+  expo = "exposure", 
+  outc = "outcome",
+  parallel = FALSE  # Set to TRUE for parallel processing
+)
+
+# View top covariates
+head(prioritization[order(absLogBias, decreasing = TRUE)])
+```
+
+# Advanced Features
+
+## Parallel Processing
+
+For large datasets, you can use parallel processing:
+
+```{r parallel-processing, eval=FALSE}
+# Use parallel processing
+prioritization_parallel <- prioritize(
+  cohort_data, 
+  pid = "pid", 
+  expo = "exposure", 
+  outc = "outcome",
+  parallel = TRUE,
+  n_cores = 4  # Use 4 cores
+)
+```
+
+## Multi-Domain Analysis
+
+```{r multi-domain, eval=FALSE}
+# Create multi-domain data
+dx_data <- data.table(pid = 1:100, code = paste0("DX", 1:100), type = "dx")
+px_data <- data.table(pid = 1:100, code = paste0("PX", 1:100), type = "px")
+rx_data <- data.table(pid = 1:100, code = paste0("RX", 1:100), type = "rx")
+
+# Multi-domain analysis
+multi_domain_results <- hdps_multi_domain(
+  data_list = list(dx = dx_data, px = px_data, rx = rx_data),
+  id_col = "pid",
+  code_col = "code",
+  exposure_col = "exposure",
+  outcome_col = "outcome"
+)
+```
+
+## Complete Workflow with hdps_screen
+
+```{r complete-workflow}
+# Complete workflow in one function
+results <- hdps_screen(
+  data = dx_data,
+  id_col = "pid",
+  code_col = "code",
+  exposure_col = "exposure",
+  outcome_col = "outcome",
+  n_candidates = 20,
+  min_patients = 5,
+  parallel = FALSE
+)
+
+# View results
+str(results)
+```
+
+# Visualization
+
+## Bias Distribution Plot
+
+```{r bias-plot}
+# Plot bias distribution
+p1 <- plot_bias_distribution(prioritization, top_n = 10)
+print(p1)
+```
+
+## Covariate Strength Relationships
+
+```{r strength-plot}
+# Plot covariate strength relationships
+p2 <- plot_covariate_strength(prioritization)
+print(p2)
+```
+
+## Bias vs Prevalence
+
+```{r prevalence-plot}
+# Plot bias vs prevalence
+p3 <- plot_bias_vs_prevalence(prioritization)
+print(p3)
+```
+
+## Interactive Plots
+
+```{r interactive-plots, eval=FALSE}
+# Create interactive plots
+library(plotly)
+
+# Interactive bias distribution
+p1_interactive <- plot_bias_distribution(prioritization, top_n = 10, interactive = TRUE)
+p1_interactive
+
+# Interactive strength plot
+p2_interactive <- plot_covariate_strength(prioritization, interactive = TRUE)
+p2_interactive
+```
+
+# Flexible Data Input
+
+## Different Input Formats
+
+```{r flexible-input}
+# Long format (default)
+data_long <- hdps_input(dx_data, format = "long")
+
+# Wide format
+wide_data <- dcast(dx_data, pid ~ code, value.var = "code", fun.aggregate = length)
+data_wide <- hdps_input(wide_data, format = "wide", value_col = "count")
+
+# Matrix format
+matrix_data <- matrix(rbinom(100, 1, 0.5), nrow = 10, ncol = 10)
+rownames(matrix_data) <- 1:10
+colnames(matrix_data) <- paste0("VAR", 1:10)
+data_matrix <- hdps_input(matrix_data, format = "matrix")
+
+head(data_matrix)
+```
+
+# Performance Tips
+
+## Large Datasets
+
+For large datasets, consider:
+
+1. **Use parallel processing**: Set `parallel = TRUE` in `prioritize()`
+2. **Limit candidates**: Use smaller `n` values in `identify_candidates()`
+3. **Filter data**: Remove rare codes before analysis
+4. **Use data.table**: Ensure your data is in `data.table` format
+
+## Memory Management
+
+```{r memory-tips, eval=FALSE}
+# Monitor memory usage
+library(pryr)
+mem_used()
+
+# Use gc() to free memory
+gc()
+```
+
+# Best Practices
+
+## Data Preparation
+
+1. **Clean your data**: Remove missing values and invalid codes
+2. **Standardize formats**: Ensure consistent column names and data types
+3. **Validate inputs**: Check that required columns exist
+
+## Parameter Selection
+
+1. **n_candidates**: Start with 200-500, adjust based on your data size
+2. **min_patients**: Use 10-50 depending on your sample size
+3. **parallel**: Use for datasets with >1000 covariates
+
+## Quality Control
+
+```{r quality-control}
+# Check data quality
+cat("Number of patients:", length(unique(dx_data$pid)), "\n")
+cat("Number of codes:", length(unique(dx_data$code)), "\n")
+cat("Missing values:", sum(is.na(dx_data)), "\n")
+
+# Check exposure/outcome distribution
+table(master_data$exposure)
+table(master_data$outcome)
+```
+
+# Troubleshooting
+
+## Common Issues
+
+1. **Memory errors**: Reduce `n_candidates` or use parallel processing
+2. **Slow performance**: Enable parallel processing
+3. **Missing data**: Check for NA values in your dataset
+4. **Column name errors**: Ensure column names match exactly
+
+## Debugging
+
+```{r debugging}
+# Check intermediate results
+candidates <- identify_candidates(dx_data, "pid", "code", "dx", n = 10)
+cat("Number of candidates:", nrow(candidates$candidates), "\n")
+
+# Check recurrence data
+recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
+cat("Number of recurrence variables:", ncol(recurrence) - 1, "\n")
+```
+
+# Conclusion
+
+The `hdps` package provides a comprehensive solution for high-dimensional propensity score analysis. Key features include:
+
+- **Modular workflow** for flexible analysis
+- **Domain-specific handling** for different data types
+- **Parallel processing** for large datasets
+- **Enhanced visualizations** for result interpretation
+- **Flexible data input** for various formats
+
+For more information, see the package documentation and examples.
+
+# References
+
+Schneeweiss, S., Rassen, J. A., Glynn, R. J., Avorn, J., Mogun, H., & Brookhart, M. A. (2009). High-dimensional propensity score adjustment in studies of treatment effects using health care claims data. *Epidemiology*, 20(4), 512-522.
