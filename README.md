@@ -29,7 +29,7 @@ devtools::install_github("Cainefm/hdps")
 ### From Local Package File
 ```r
 # Install from .tar.gz file
-install.packages("hdps_0.9.0.tar.gz", repos = NULL, type = "source")
+install.packages("hdps_0.9.1.tar.gz", repos = NULL, type = "source")
 ```
 
 ### Dependencies
