@@ -439,7 +439,7 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
         if (!missing(exposure_col) && !missing(outcome_col)) {
             # Merge with exposure/outcome data
             if (!is.null(master_data)) {
-                # Standardize ID column name for merging
+                # Standardize ID column name and data types for merging
                 master_copy <- copy(master_data)
                 if (!id_col %in% names(master_copy)) {
                     stop("Column '", id_col, "' not found in master_data")
@@ -448,11 +448,29 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
                     master_copy[, pid := NULL]
                 }
                 setnames(master_copy, id_col, "pid")
+                
+                # Convert all columns to character for consistent merging
+                master_copy[, pid := as.character(pid)]
+                recurrence[, pid := as.character(pid)]
+                if (exposure_col %in% names(master_copy)) {
+                    master_copy[, (exposure_col) := as.character(get(exposure_col))]
+                }
+                if (outcome_col %in% names(master_copy)) {
+                    master_copy[, (outcome_col) := as.character(get(outcome_col))]
+                }
+                
                 cohort_data <- merge(recurrence, master_copy, by = "pid", all.x = TRUE)
             } else {
                 # Use exposure/outcome columns from the same dataset
-                cohort_data <- merge(recurrence, 
-                                   data[, c(id_col, exposure_col, outcome_col), with = FALSE], 
+                exposure_outcome_data <- data[, c(id_col, exposure_col, outcome_col), with = FALSE]
+                
+                # Convert all columns to character for consistent merging
+                exposure_outcome_data[, (id_col) := as.character(get(id_col))]
+                recurrence[, pid := as.character(pid)]
+                exposure_outcome_data[, (exposure_col) := as.character(get(exposure_col))]
+                exposure_outcome_data[, (outcome_col) := as.character(get(outcome_col))]
+                
+                cohort_data <- merge(recurrence, exposure_outcome_data, 
                                    by.x = "pid", by.y = id_col, all.x = TRUE)
             }
             
