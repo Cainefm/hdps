@@ -437,42 +437,29 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
         
         # Step 3: Prioritize (if exposure and outcome provided)
         if (!missing(exposure_col) && !missing(outcome_col)) {
-            # Merge with exposure/outcome data
+            # Prepare exposure/outcome data
             if (!is.null(master_data)) {
-                # Standardize ID column name and data types for merging
-                master_copy <- copy(master_data)
-                if (!id_col %in% names(master_copy)) {
+                # Use provided master data
+                cohort_data <- copy(master_data)
+                if (!id_col %in% names(cohort_data)) {
                     stop("Column '", id_col, "' not found in master_data")
                 }
-                if ("pid" %in% names(master_copy) && id_col != "pid") {
-                    master_copy[, pid := NULL]
+                if ("pid" %in% names(cohort_data) && id_col != "pid") {
+                    cohort_data[, pid := NULL]
                 }
-                setnames(master_copy, id_col, "pid")
-                
-                # Convert all columns to character for consistent merging
-                master_copy[, pid := as.character(pid)]
-                recurrence[, pid := as.character(pid)]
-                if (exposure_col %in% names(master_copy)) {
-                    master_copy[, (exposure_col) := as.character(get(exposure_col))]
-                }
-                if (outcome_col %in% names(master_copy)) {
-                    master_copy[, (outcome_col) := as.character(get(outcome_col))]
-                }
-                
-                cohort_data <- merge(recurrence, master_copy, by = "pid", all.x = TRUE)
+                setnames(cohort_data, id_col, "pid")
             } else {
-                # Use exposure/outcome columns from the same dataset
-                exposure_outcome_data <- data[, c(id_col, exposure_col, outcome_col), with = FALSE]
-                
-                # Convert all columns to character for consistent merging
-                exposure_outcome_data[, (id_col) := as.character(get(id_col))]
-                recurrence[, pid := as.character(pid)]
-                exposure_outcome_data[, (exposure_col) := as.character(get(exposure_col))]
-                exposure_outcome_data[, (outcome_col) := as.character(get(outcome_col))]
-                
-                cohort_data <- merge(recurrence, exposure_outcome_data, 
-                                   by.x = "pid", by.y = id_col, all.x = TRUE)
+                # Use exposure/outcome from same dataset
+                cohort_data <- data[, c(id_col, exposure_col, outcome_col), with = FALSE]
+                setnames(cohort_data, id_col, "pid")
             }
+            
+            # Standardize data types and merge
+            cohort_data[, pid := as.character(pid)]
+            cohort_data[, (exposure_col) := as.numeric(get(exposure_col))]
+            cohort_data[, (outcome_col) := as.numeric(get(outcome_col))]
+            recurrence[, pid := as.character(pid)]
+            cohort_data <- merge(recurrence, cohort_data, by = "pid", all.x = TRUE)
             
             prioritization <- prioritize(cohort_data, "pid", exposure_col, outcome_col, 
                                        correction = correction)
