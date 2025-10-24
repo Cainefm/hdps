@@ -45,6 +45,9 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
     # Rename columns once at start
     setnames(dt, c(id, code), c("pid", "code"))
     
+    # Ensure pid is character for consistent merging
+    dt[, pid := as.character(pid)]
+    
     prevalence <- dt[, .(n_patients = uniqueN(pid)), by = code]
     total_patients <- dt[, uniqueN(pid)]
     prevalence[, prevalence := (n_patients / total_patients) * 100]
@@ -106,6 +109,9 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
     
     # Rename columns once at start
     setnames(dt, c(id, code), c("pid", "code"))
+    
+    # Ensure pid is character for consistent merging
+    dt[, pid := as.character(pid)]
     
     # Calculate count cutoff based on rank
     count_cutoff <- if (rank == Inf) Inf else {
