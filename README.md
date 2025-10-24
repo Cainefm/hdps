@@ -60,7 +60,7 @@ results <- hdps_screen(
 # View results
 head(results$prioritization)
 ```
-<img src="https://i.imgur.com/H8uTD1K.png" alt="Sample output of hdps_screen prioritization result" width="650"/>
+<img src="data/Snipaste_2025-10-24_17-07-48.png" alt="Sample output of hdps_screen prioritization result" width="650"/>
 
 
 ### 3-Step Workflow
@@ -75,14 +75,14 @@ recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
 cohort_data <- merge(recurrence, master, by = "pid", all.x = TRUE)
 prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 ```
-<img src="https://i.imgur.com/fvAjZTC.png" alt="Plot of absolute log-bias for top prioritized covariates by hdps_screen" width="650"/>
+<img src="data/Snipaste_2025-10-24_17-09-12.png" alt="Plot of absolute log-bias for top prioritized covariates by hdps_screen" width="650"/>
 
 ### Interactive Analysis
 ```r
 # Launch interactive Shiny app
 hdps_interactive()
 ```
-<img src="https://i.imgur.com/2jzNJFu.jpg" alt="Screenshot of the HDPS Interactive Covariate Selection Shiny app, showing bias distribution, covariate strength, and bias vs prevalence plots." width="650"/>
+<img src="data/Snipaste_2025-10-24_17-10-32.png" alt="Screenshot of the HDPS Interactive Covariate Selection Shiny app, showing bias distribution, covariate strength, and bias vs prevalence plots." width="650"/>
 
 
 
