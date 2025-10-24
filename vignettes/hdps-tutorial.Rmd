@@ -131,8 +131,7 @@ prioritization <- prioritize(
   cohort_data, 
   pid = "pid", 
   expo = "exposure", 
-  outc = "outcome",
-  parallel = FALSE  # Set to TRUE for parallel processing
+  outc = "outcome"
 )
 
 # View top covariates
@@ -141,21 +140,6 @@ head(prioritization[order(absLogBias, decreasing = TRUE)])
 
 # Advanced Features
 
-## Parallel Processing
-
-For large datasets, you can use parallel processing:
-
-```{r parallel-processing, eval=FALSE}
-# Use parallel processing
-prioritization_parallel <- prioritize(
-  cohort_data, 
-  pid = "pid", 
-  expo = "exposure", 
-  outc = "outcome",
-  parallel = TRUE,
-  n_cores = 4  # Use 4 cores
-)
-```
 
 ## Multi-Domain Analysis
 
@@ -186,8 +170,7 @@ results <- hdps_screen(
   exposure_col = "exposure",
   outcome_col = "outcome",
   n_candidates = 20,
-  min_patients = 5,
-  parallel = FALSE
+  min_patients = 5
 )
 
 # View results
@@ -260,10 +243,9 @@ data_wide <- hdps_input(wide_data, format = "wide", value_col = "count")
 
 For large datasets, consider:
 
-1. **Use parallel processing**: Set `parallel = TRUE` in `prioritize()`
-2. **Limit candidates**: Use smaller `n` values in `identify_candidates()`
-3. **Filter data**: Remove rare codes before analysis
-4. **Use data.table**: Ensure your data is in `data.table` format
+1. **Limit candidates**: Use smaller `n` values in `identify_candidates()`
+2. **Filter data**: Remove rare codes before analysis
+3. **Use data.table**: Ensure your data is in `data.table` format
 
 ## Memory Management
 
@@ -288,7 +270,6 @@ gc()
 
 1. **n_candidates**: Start with 200-500, adjust based on your data size
 2. **min_patients**: Use 10-50 depending on your sample size
-3. **parallel**: Use for datasets with >1000 covariates
 
 ## Quality Control
 
@@ -307,8 +288,8 @@ table(master_data$outcome)
 
 ## Common Issues
 
-1. **Memory errors**: Reduce `n_candidates` or use parallel processing
-2. **Slow performance**: Enable parallel processing
+1. **Memory errors**: Reduce `n_candidates` or filter data
+2. **Slow performance**: Use data.table for better performance
 3. **Missing data**: Check for NA values in your dataset
 4. **Column name errors**: Ensure column names match exactly
 

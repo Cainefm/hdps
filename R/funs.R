@@ -131,8 +131,11 @@ rec_assess <- function(dt, id, code, type, rank = Inf) {
 #' @param cova Column name for covariate
 #' @return 2x2 contingency table
 estBiasTable <- function(dt, expo, cova) {
-    temp <- dt[, .(count = .N), by = c(expo, cova)]
-    setnames(temp, c(expo, cova), c("e", "c"))
+    # Use .() method for better parallel compatibility
+    temp <- dt[, .(count = .N), by = .(get(expo), get(cova))]
+    # Get the actual column names and rename them
+    col_names <- names(temp)
+    setnames(temp, col_names[1:2], c("e", "c"))
     temp <- merge(temp, CJ(e = c(0, 1), c = c(0, 1)), by = c("e", "c"), all.y = TRUE)
     temp[is.na(count), count := 0]
     temp
@@ -151,6 +154,7 @@ estBiasTable <- function(dt, expo, cova) {
 estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
     setDT(hdpsCohort)
     
+    # Use .() method for better parallel compatibility
     e1 <- hdpsCohort[get(expo) == 1, .N]
     e0 <- hdpsCohort[get(expo) == 0, .N]
     d1 <- hdpsCohort[get(outc) == 1, .N]
@@ -209,35 +213,14 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
 #' @param expo Column name for exposure
 #' @param outc Column name for outcome
 #' @param correction Apply 0.1 correction for zero cells
-#' @param parallel Use parallel processing
-#' @param n_cores Number of cores for parallel processing
 #' @return Data table with bias estimates for all covariates
 #' @export
-prioritize <- function(dt, pid, expo, outc, correction = TRUE, parallel = FALSE, n_cores = NULL) {
+prioritize <- function(dt, pid, expo, outc, correction = TRUE) {
     cova <- setdiff(colnames(dt), c(expo, outc, pid))
     
-    if (parallel) {
-        if (is.null(n_cores)) {
-            n_cores <- min(4, parallel::detectCores() - 1)
-        }
-        
-        cl <- parallel::makeCluster(n_cores)
-        parallel::clusterEvalQ(cl, {
-            library(data.table)
-        })
-        parallel::clusterExport(cl, c("estBias", "estBiasTable", "dt", "expo", "outc", "correction"), envir = environment())
-        
-        result <- parallel::parLapply(cl, cova, function(x) {
-            estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-        })
-        
-        parallel::stopCluster(cl)
-        rbindlist(result)
-    } else {
-        rbindlist(pbapply::pblapply(cova, function(x) {
-            estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-        }))
-    }
+    rbindlist(pbapply::pblapply(cova, function(x) {
+        estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
+    }))
 }
 
 #' HDPS workflow for multiple domains
@@ -423,7 +406,7 @@ plot_bias_vs_prevalence <- function(hdps_result, interactive = FALSE) {
 #'
 hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col, 
                        type_col = NULL, master_data = NULL, n_candidates = 200, min_patients = 10, 
-                       parallel = FALSE, n_cores = NULL, correction = TRUE) {
+                       correction = TRUE) {
     
     # Input validation
     if (missing(data) || is.null(data)) {
@@ -469,7 +452,7 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
             }
             
             prioritization <- prioritize(cohort_data, "pid", exposure_col, outcome_col, 
-                                       correction = correction, parallel = parallel, n_cores = n_cores)
+                                       correction = correction)
             
             return(list(
                 candidates = candidates,
