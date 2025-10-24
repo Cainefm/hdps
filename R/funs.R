@@ -137,7 +137,7 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
     patterns_long <- patterns[, .(pid, code, variable = c("once", "spor", "freq"), 
                                   value = c(once, spor, freq))]
     patterns_long <- patterns_long[!is.na(value)]
-    patterns_long[, code_type := paste("rec", type, code, variable, sep = "_")]
+    patterns_long[, code_type := paste(type, code, variable, sep = "_")]
     
     output <- dcast(patterns_long, pid ~ code_type, value.var = "value", fill = 0, fun.aggregate = max)
     
