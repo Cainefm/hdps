@@ -34,9 +34,9 @@ install.packages("hdps_0.9.1.tar.gz", repos = NULL, type = "source")
 **Required**: `data.table`, `pbapply`, `parallel`  
 **Suggested**: `ggplot2`, `plotly`, `shiny`, `DT`
 
-## 🚀 Quick Start
+## 🚀 Quick Start - Basic Usage
 
-### Basic Usage
+### 1-Step workflow
 ```r
 library(hdps)
 library(data.table)
@@ -61,7 +61,7 @@ results <- hdps_screen(
 head(results$prioritization)
 ```
 
-### Seperated 3-Step Workflow
+### 3-Step Workflow
 ```r
 # Step 1: Identify candidate covariates
 candidates <- identify_candidates(dx, "pid", "icd9code", "dx", n = 200, min_patients = 10)
@@ -115,30 +115,6 @@ library(testthat)
 test_package("hdps")
 ```
 
-## 🔧 Advanced Features
-
-### Custom Parameters
-```r
-# Fine-tune analysis parameters
-results <- hdps_screen(
-  data = dx,
-  id_col = "pid",
-  code_col = "icd9code",
-  exposure_col = "exposure", 
-  outcome_col = "outcome",
-  n_candidates = 500,        # More candidates
-  min_patients = 20,         # Higher threshold
-  parallel = TRUE,           # Use parallel processing
-  n_cores = 8,              # Use 8 cores
-  correction = TRUE          # Apply rare outcome correction
-)
-```
-
-### Quality Control
-```r
-summary(results$candidates$candidates)
-summary(results$prioritization)
-```
 
 ## 📖 Citation
 
