@@ -33,7 +33,9 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
     }
     
     # Check if columns have any non-NA values
-    if (dt[, sum(!is.na(get(id)) & !is.na(get(code)))] == 0) {
+    id_col_data <- dt[[id]]
+    code_col_data <- dt[[code]]
+    if (sum(!is.na(id_col_data) & !is.na(code_col_data)) == 0) {
         return(list(candidates = data.table(), data = dt[0], patient_ids = character(0)))
     }
     
@@ -92,8 +94,10 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
         return(data.table(pid = character(0)))
     }
     
-    # Check if columns have any non-NA values
-    if (dt[, sum(!is.na(get(id)) & !is.na(get(code)))] == 0) {
+    # Check if columns have any non-NA values  
+    id_col_data <- dt[[id]]
+    code_col_data <- dt[[code]]
+    if (sum(!is.na(id_col_data) & !is.na(code_col_data)) == 0) {
         return(data.table(pid = character(0)))
     }
     
