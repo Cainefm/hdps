@@ -23,26 +23,27 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
         stop("'type' must be a character")
     }
     
-    dt <- copy(dt)
-    setDT(dt)
-    
+    if (!is.data.table(dt)) dt <- as.data.table(dt)
     if (!id %in% names(dt)) stop("Column '", id, "' not found")
     if (!code %in% names(dt)) stop("Column '", code, "' not found")
     
-    setnames(dt, c(id, code), c("pid", "code"))
+    temp_id <- "temp_pid"
+    temp_code <- "temp_code"
+    setnames(dt, c(id, code), c(temp_id, temp_code))
     
-    prevalence <- dt[, .(n_patients = length(unique(pid))), by = code]
-    total_patients <- dt[, length(unique(pid))]
+    prevalence <- dt[, .(n_patients = uniqueN(temp_id)), by = temp_code]
+    total_patients <- dt[, uniqueN(temp_id)]
     prevalence[, prevalence := (n_patients / total_patients) * 100]
     prevalence[, prevalence_truncated := ifelse(prevalence > 50, 100 - prevalence, prevalence)]
     
     candidates <- prevalence[n_patients >= min_patients][order(prevalence_truncated, decreasing = TRUE)]
     candidates <- candidates[1:min(n, nrow(candidates))]
     
-    result <- dt[code %in% candidates$code]
-    result[, code := paste0(type, "_", code)]
+    result <- dt[temp_code %in% candidates$temp_code]
+    result[, temp_code := paste0(type, "_", temp_code)]
+    setnames(result, c(temp_id, temp_code), c("pid", "code"))
     
-    list(candidates = candidates, data = result, patient_ids = unique(dt$pid))
+    list(candidates = candidates, data = result, patient_ids = unique(dt[[temp_id]]))
 }
 
 #' Assess recurrence of covariates
@@ -71,37 +72,37 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
         stop("'rank' must be numeric")
     }
     
-    dt <- copy(dt)
-    setDT(dt)
-    
+    if (!is.data.table(dt)) dt <- as.data.table(dt)
     if (!id %in% names(dt)) stop("Column '", id, "' not found")
     if (!code %in% names(dt)) stop("Column '", code, "' not found")
     
-    setnames(dt, c(id, code), c("pid", "code"))
+    temp_id <- "temp_pid"
+    temp_code <- "temp_code"
+    setnames(dt, c(id, code), c(temp_id, temp_code))
     
-    count_cutoff <- if (rank == Inf) Inf else {
-        dt[, .(count = .N), .(pid, code)][order(count, decreasing = TRUE)][rank, count]
-    }
-    
-    counts <- dt[, .(count = .N), .(pid, code)][count <= count_cutoff]
-    quantiles <- dt[, .(count = .N), .(pid, code)][, .(
+    counts <- dt[, .(count = .N), .(temp_id, temp_code)]
+    quantiles <- counts[, .(
         Q1 = quantile(count, 0.25),
         Q2 = quantile(count, 0.5),
         Q3 = quantile(count, 0.75)
-    ), code][, .(code, Q1, Q2 = ifelse(Q1 == Q2, NA, Q2), Q3 = ifelse(Q2 == Q3, NA, Q3))]
+    ), temp_code]
+    quantiles[, Q2 := ifelse(Q1 == Q2, NA, Q2)]
+    quantiles[, Q3 := ifelse(Q2 == Q3, NA, Q3)]
     
-    merged <- merge(counts, quantiles, by = "code", all.x = TRUE)
+    merged <- counts[quantiles, on = temp_code]
     patterns <- merged[, .(
-        once = as.numeric(ifelse(count >= 1, 1, 0)),
-        spor = as.numeric(ifelse(!is.na(Q2) & count >= Q2, 1, ifelse(is.na(Q2), NA, 0))),
-        freq = as.numeric(ifelse(!is.na(Q3) & count >= Q3, 1, ifelse(is.na(Q3), NA, 0)))
-    ), .(pid, code)]
+        once = as.numeric(count >= 1),
+        spor = as.numeric(!is.na(Q2) & count >= Q2),
+        freq = as.numeric(!is.na(Q3) & count >= Q3)
+    ), .(temp_id, temp_code)]
     
-    melted <- melt(patterns, id.vars = c("pid", "code"))[!is.na(value)]
-    melted[, code_type := paste(type, code, variable, sep = "_")]
+    patterns_long <- patterns[, .(temp_id, temp_code, variable = c("once", "spor", "freq"), 
+                                  value = c(once, spor, freq))]
+    patterns_long <- patterns_long[!is.na(value)]
+    patterns_long[, code_type := paste(type, temp_code, variable, sep = "_")]
     
-    output <- dcast(melted, pid ~ code_type, value.var = "value")
-    output[is.na(output)] <- 0
+    output <- dcast(patterns_long, temp_id ~ code_type, value.var = "value", fill = 0)
+    setnames(output, "temp_id", "pid")
     
     output
 }
