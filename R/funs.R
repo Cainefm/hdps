@@ -37,20 +37,21 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
         return(list(candidates = data.table(), data = dt[0], patient_ids = character(0)))
     }
     
-    prevalence <- dt[, .(n_patients = uniqueN(get(id))), by = get(code)]
-    setnames(prevalence, "get", code)
-    total_patients <- dt[, uniqueN(get(id))]
+    # Rename columns once at start
+    setnames(dt, c(id, code), c("pid", "code"))
+    
+    prevalence <- dt[, .(n_patients = uniqueN(pid)), by = code]
+    total_patients <- dt[, uniqueN(pid)]
     prevalence[, prevalence := (n_patients / total_patients) * 100]
     prevalence[, prevalence_truncated := ifelse(prevalence > 50, 100 - prevalence, prevalence)]
     
     candidates <- prevalence[n_patients >= min_patients][order(prevalence_truncated, decreasing = TRUE)]
     candidates <- candidates[1:min(n, nrow(candidates))]
     
-    result <- dt[get(code) %in% candidates[[code]]]
-    result[, (code) := paste0(type, "_", get(code))]
-    setnames(result, c(id, code), c("pid", "code"))
+    result <- dt[code %in% candidates$code]
+    result[, code := paste0(type, "_", code)]
     
-    list(candidates = candidates, data = result, patient_ids = unique(dt[[id]]))
+    list(candidates = candidates, data = result, patient_ids = unique(dt$pid))
 }
 
 #' Assess recurrence of covariates
@@ -93,33 +94,36 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
         return(data.table(pid = character(0)))
     }
     
-    counts <- dt[, .(count = .N), .(get(id), get(code))]
-    setnames(counts, c("get", "get.1"), c(id, code))
+    # Rename columns once at start
+    setnames(dt, c(id, code), c("pid", "code"))
+    
+    # Calculate count cutoff based on rank
+    count_cutoff <- if (rank == Inf) Inf else {
+        dt[, .(count = .N), .(pid, code)][order(count, decreasing = TRUE)][rank, count]
+    }
+    
+    counts <- dt[, .(count = .N), .(pid, code)][count <= count_cutoff]
     quantiles <- counts[, .(
         Q1 = quantile(count, 0.25),
         Q2 = quantile(count, 0.5),
         Q3 = quantile(count, 0.75)
-    ), get(code)]
-    setnames(quantiles, "get", code)
+    ), code]
     quantiles[, Q2 := ifelse(Q1 == Q2, NA, Q2)]
     quantiles[, Q3 := ifelse(Q2 == Q3, NA, Q3)]
     
-    merged <- counts[quantiles, on = code]
+    merged <- counts[quantiles, on = "code"]
     patterns <- merged[, .(
         once = as.numeric(count >= 1),
         spor = as.numeric(!is.na(Q2) & count >= Q2),
         freq = as.numeric(!is.na(Q3) & count >= Q3)
-    ), .(get(id), get(code))]
-    setnames(patterns, c("get", "get.1"), c(id, code))
+    ), .(pid, code)]
     
-    patterns_long <- patterns[, .(get(id), get(code), variable = c("once", "spor", "freq"), 
+    patterns_long <- patterns[, .(pid, code, variable = c("once", "spor", "freq"), 
                                   value = c(once, spor, freq))]
-    setnames(patterns_long, c("get", "get.1"), c(id, code))
     patterns_long <- patterns_long[!is.na(value)]
-    patterns_long[, code_type := paste(type, get(code), variable, sep = "_")]
+    patterns_long[, code_type := paste(type, code, variable, sep = "_")]
     
-    output <- dcast(patterns_long, get(id) ~ code_type, value.var = "value", fill = 0)
-    setnames(output, "get", "pid")
+    output <- dcast(patterns_long, pid ~ code_type, value.var = "value", fill = 0)
     
     output
 }
