@@ -11,7 +11,7 @@ identify_candidates(dt, id, code, type, n = 200, min_patients = 10)
 
 \item{id}{Column name for patient identifier}
 
-\item{code}{Column name for codes (ICD-9, ICD-10, drug codes, etc.)}
+\item{code}{Column name for codes}
 
 \item{type}{Prefix for output (dx, px, rx)}
 

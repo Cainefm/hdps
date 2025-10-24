@@ -11,9 +11,7 @@ hdps_multi_domain(
   exposure_col,
   outcome_col,
   n_candidates = 200,
-  min_patients = 10,
-  parallel = FALSE,
-  n_cores = NULL
+  min_patients = 10
 )
 }
 \arguments{
@@ -30,10 +28,6 @@ hdps_multi_domain(
 \item{n_candidates}{Maximum number of candidates per domain}
 
 \item{min_patients}{Minimum patients per covariate}
-
-\item{parallel}{Use parallel processing}
-
-\item{n_cores}{Number of cores for parallel processing}
 }
 \value{
 List containing results for each domain

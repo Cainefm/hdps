@@ -232,12 +232,10 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE) {
 #' @param outcome_col Column name for outcome
 #' @param n_candidates Maximum number of candidates per domain
 #' @param min_patients Minimum patients per covariate
-#' @param parallel Use parallel processing
-#' @param n_cores Number of cores for parallel processing
 #' @return List containing results for each domain
 #' @export
 hdps_multi_domain <- function(data_list, id_col, code_col, exposure_col, outcome_col, 
-                             n_candidates = 200, min_patients = 10, parallel = FALSE, n_cores = NULL) {
+                             n_candidates = 200, min_patients = 10) {
     
     if (!is.list(data_list)) {
         stop("data_list must be a list of data.tables")
@@ -266,8 +264,7 @@ hdps_multi_domain <- function(data_list, id_col, code_col, exposure_col, outcome
                                data_list[[domain]][, c(id_col, exposure_col, outcome_col), with = FALSE], 
                                by.x = "pid", by.y = id_col, all.x = TRUE)
             
-            prioritization <- prioritize(master_data, "pid", exposure_col, outcome_col, 
-                                       parallel = parallel, n_cores = n_cores)
+            prioritization <- prioritize(master_data, "pid", exposure_col, outcome_col)
             
             results[[domain]] <- list(
                 candidates = candidates,
@@ -424,7 +421,7 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
             stop("type_col must be specified for multi-domain data")
         }
         return(hdps_multi_domain(data, id_col, code_col, exposure_col, outcome_col, 
-                                n_candidates, min_patients, parallel, n_cores))
+                                n_candidates, min_patients))
     } else {
         # Single domain data
         if (!is.data.table(data)) {

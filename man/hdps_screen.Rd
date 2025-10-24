@@ -14,8 +14,6 @@ hdps_screen(
   master_data = NULL,
   n_candidates = 200,
   min_patients = 10,
-  parallel = FALSE,
-  n_cores = NULL,
   correction = TRUE
 )
 }
@@ -36,11 +34,11 @@ hdps_screen(
 
 \item{min_patients}{Minimum patients per covariate}
 
+\item{correction}{Apply correction for rare outcomes}
+
 \item{parallel}{Use parallel processing}
 
 \item{n_cores}{Number of cores for parallel processing}
-
-\item{correction}{Apply correction for rare outcomes}
 }
 \value{
 Complete HDPS results
