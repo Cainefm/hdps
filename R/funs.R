@@ -439,8 +439,16 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
         if (!missing(exposure_col) && !missing(outcome_col)) {
             # Merge with exposure/outcome data
             if (!is.null(master_data)) {
-                # Use provided master data
-                cohort_data <- merge(recurrence, master_data, by = "pid", all.x = TRUE)
+                # Standardize ID column name for merging
+                master_copy <- copy(master_data)
+                if (!id_col %in% names(master_copy)) {
+                    stop("Column '", id_col, "' not found in master_data")
+                }
+                if ("pid" %in% names(master_copy) && id_col != "pid") {
+                    master_copy[, pid := NULL]
+                }
+                setnames(master_copy, id_col, "pid")
+                cohort_data <- merge(recurrence, master_copy, by = "pid", all.x = TRUE)
             } else {
                 # Use exposure/outcome columns from the same dataset
                 cohort_data <- merge(recurrence, 
