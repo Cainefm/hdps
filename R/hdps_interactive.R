@@ -153,8 +153,7 @@ hdps_interactive <- function() {
           outcome_col = input$outcome_col,
           master_data = master_data(),
           n_candidates = input$n_candidates,
-          min_patients = input$min_patients,
-          parallel = FALSE
+          min_patients = input$min_patients
         )
         
         results
