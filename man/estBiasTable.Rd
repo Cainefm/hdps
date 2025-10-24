@@ -2,22 +2,20 @@
 % Please edit documentation in R/funs.R
 \name{estBiasTable}
 \alias{estBiasTable}
-\title{Estimate the apparent relative risk for one covariate}
+\title{Create 2x2 table for bias estimation}
 \usage{
-estBiasTable(dt, expo, cova, ...)
+estBiasTable(dt, expo, cova)
 }
 \arguments{
-\item{dt}{A dataset in data.table format, including}
+\item{dt}{Data table with exposure and covariate}
 
-\item{expo}{The column name for exposure or outcome}
+\item{expo}{Column name for exposure}
 
-\item{cova}{The column name for covariates}
-
-\item{...}{}
+\item{cova}{Column name for covariate}
 }
 \value{
-A data.table including the apparent relative risk for one covariate
+2x2 contingency table
 }
 \description{
-Estimate the apparent relative risk for one covariate
+Create 2x2 table for bias estimation
 }

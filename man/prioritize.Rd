@@ -2,24 +2,36 @@
 % Please edit documentation in R/funs.R
 \name{prioritize}
 \alias{prioritize}
-\title{Calculate the apparent relative risk for all covariates}
+\title{Prioritize covariates using bias estimation}
 \usage{
-prioritize(dt, pid, expo, outc, correction = TRUE)
+prioritize(
+  dt,
+  pid,
+  expo,
+  outc,
+  correction = TRUE,
+  parallel = FALSE,
+  n_cores = NULL
+)
 }
 \arguments{
-\item{dt}{Dataset after reccurent assessment in data.table format}
+\item{dt}{Dataset after recurrence assessment}
 
-\item{pid}{The column name for patient ID}
+\item{pid}{Column name for patient ID}
 
-\item{expo}{The column name for exposure}
+\item{expo}{Column name for exposure}
 
-\item{outc}{The column name for outcome}
+\item{outc}{Column name for outcome}
 
-\item{correction}{When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.}
+\item{correction}{Apply 0.1 correction for zero cells}
+
+\item{parallel}{Use parallel processing}
+
+\item{n_cores}{Number of cores for parallel processing}
 }
 \value{
-A data.table including the apparent relative risk for all covariates
+Data table with bias estimates for all covariates
 }
 \description{
-Prioritise the large pool of covariates generated in the previous step is prioritised. This is typically achieved using the Bross formula, which uses univariate associations of covariates with treatment and outcome, to identify those with the highest potential tobias the treatment-outcome relationship
+Prioritize covariates using bias estimation
 }

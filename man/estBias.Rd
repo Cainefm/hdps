@@ -2,26 +2,24 @@
 % Please edit documentation in R/funs.R
 \name{estBias}
 \alias{estBias}
-\title{ARR Bias estimation for all covariates}
+\title{Estimate apparent relative risk bias for a covariate}
 \usage{
-estBias(hdpsCohort, cova, expo, outc, correction = TRUE, ...)
+estBias(hdpsCohort, cova, expo, outc, correction = TRUE)
 }
 \arguments{
-\item{hdpsCohort}{The dataset after recurrent assesemnt in data.table format}
+\item{hdpsCohort}{Dataset after recurrence assessment}
 
-\item{cova}{Column name of the desire covariates}
+\item{cova}{Column name for covariate}
 
-\item{expo}{Column name of the desire exposure}
+\item{expo}{Column name for exposure}
 
-\item{outc}{Column name of the desire outcome}
+\item{outc}{Column name for outcome}
 
-\item{correction}{When the outcome is rare, one of the 2 by 2 table could be zero. In this case, the algorithm will add 0.1 to the cell.}
-
-\item{...}{}
+\item{correction}{Apply 0.1 correction for zero cells}
 }
 \value{
-A data.table including the apparent relative risk for one covariates
+Data table with bias estimates
 }
 \description{
-ARR Bias estimation for all covariates
+Estimate apparent relative risk bias for a covariate
 }
