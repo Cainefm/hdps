@@ -31,6 +31,16 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
     temp_code <- "temp_code"
     setnames(dt, c(id, code), c(temp_id, temp_code))
     
+    # Check if data is empty or has no valid combinations
+    if (nrow(dt) == 0 || !temp_id %in% names(dt) || !temp_code %in% names(dt)) {
+        return(list(candidates = data.table(), data = dt[0], patient_ids = character(0)))
+    }
+    
+    # Check if columns have any non-NA values
+    if (dt[, sum(!is.na(get(temp_id)) & !is.na(get(temp_code)))] == 0) {
+        return(list(candidates = data.table(), data = dt[0], patient_ids = character(0)))
+    }
+    
     prevalence <- dt[, .(n_patients = uniqueN(temp_id)), by = temp_code]
     total_patients <- dt[, uniqueN(temp_id)]
     prevalence[, prevalence := (n_patients / total_patients) * 100]
@@ -79,6 +89,16 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
     temp_id <- "temp_pid"
     temp_code <- "temp_code"
     setnames(dt, c(id, code), c(temp_id, temp_code))
+    
+    # Check if data is empty or has no valid combinations
+    if (nrow(dt) == 0 || !temp_id %in% names(dt) || !temp_code %in% names(dt)) {
+        return(data.table(pid = character(0)))
+    }
+    
+    # Check if columns have any non-NA values
+    if (dt[, sum(!is.na(get(temp_id)) & !is.na(get(temp_code)))] == 0) {
+        return(data.table(pid = character(0)))
+    }
     
     counts <- dt[, .(count = .N), .(temp_id, temp_code)]
     quantiles <- counts[, .(
