@@ -4,7 +4,6 @@
 #' @return Shiny app
 #' @export
 hdps_interactive <- function() {
-  # Check required packages
   required_packages <- c("shiny", "DT", "data.table")
   for (pkg in required_packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -12,10 +11,8 @@ hdps_interactive <- function() {
     }
   }
   
-  # Load data.table package to ensure functions are available
   library(data.table)
   
-  # Ensure data.table is available globally
   if (!"data.table" %in% loadedNamespaces()) {
     stop("Failed to load data.table package")
   }
@@ -42,8 +39,6 @@ hdps_interactive <- function() {
         shiny::h3("Parameters"),
         shiny::numericInput("n_candidates", "Max Candidates", value = 200, min = 10, max = 1000),
         shiny::numericInput("min_patients", "Min Patients", value = 10, min = 1, max = 100),
-        shiny::checkboxInput("parallel", "Use Parallel Processing (Experimental)", value = FALSE),
-        shiny::numericInput("n_cores", "Number of Cores", value = 2, min = 1, max = 8),
         
         shiny::h3("Actions"),
         shiny::actionButton("run_analysis", "Run HDPS Analysis", class = "btn-primary"),
@@ -148,55 +143,21 @@ hdps_interactive <- function() {
     hdps_results <- shiny::reactive({
       shiny::req(input$run_analysis)
       
-      # Show warning if parallel processing is enabled
-      if (input$parallel) {
-        shiny::showNotification(
-          "Parallel processing is experimental and may cause errors. Consider disabling if issues occur.",
-          type = "warning",
-          duration = 5
-        )
-      }
-      
       shiny::withProgress(message = "Running HDPS Analysis...", {
-        # Try with parallel processing first, fall back to serial if error
-        tryCatch({
-          results <- hdps_screen(
-            data = other_data(),
-            id_col = input$id_col,
-            code_col = input$code_col,
-            exposure_col = input$exposure_col,
-            outcome_col = input$outcome_col,
-            master_data = master_data(),
-            n_candidates = input$n_candidates,
-            min_patients = input$min_patients,
-            parallel = input$parallel,
-            n_cores = input$n_cores
-          )
-          results
-        }, error = function(e) {
-          if (input$parallel) {
-            # If parallel failed, try without parallel
-            shiny::showNotification(
-              paste("Parallel processing failed, retrying with serial processing. Error:", e$message),
-              type = "warning",
-              duration = 10
-            )
-            hdps_screen(
-              data = other_data(),
-              id_col = input$id_col,
-              code_col = input$code_col,
-              exposure_col = input$exposure_col,
-              outcome_col = input$outcome_col,
-              master_data = master_data(),
-              n_candidates = input$n_candidates,
-              min_patients = input$min_patients,
-              parallel = FALSE,
-              n_cores = input$n_cores
-            )
-          } else {
-            stop(e)
-          }
-        })
+        # Single domain analysis with master data
+        results <- hdps_screen(
+          data = other_data(),
+          id_col = input$id_col,
+          code_col = input$code_col,
+          exposure_col = input$exposure_col,
+          outcome_col = input$outcome_col,
+          master_data = master_data(),
+          n_candidates = input$n_candidates,
+          min_patients = input$min_patients,
+          parallel = FALSE
+        )
+        
+        results
       })
     })
     

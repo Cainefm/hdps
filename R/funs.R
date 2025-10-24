@@ -3,14 +3,13 @@
 #'
 #' @param dt Data table with patient and covariate information
 #' @param id Column name for patient identifier
-#' @param code Column name for codes (ICD-9, ICD-10, drug codes, etc.)
+#' @param code Column name for codes
 #' @param type Prefix for output (dx, px, rx)
 #' @param n Maximum number of candidates to return
 #' @param min_patients Minimum patients required per covariate
 #' @return List with candidates, filtered data, and patient IDs
 #' @export
 identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) {
-    # Input validation
     if (missing(dt) || (!is.data.table(dt) && !is.data.frame(dt))) {
         stop("'dt' must be a data.frame or data.table")
     }
@@ -24,27 +23,22 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
         stop("'type' must be a character")
     }
     
-    # Prepare data
     dt <- copy(dt)
     setDT(dt)
     
-    # Validate columns exist
     if (!id %in% names(dt)) stop("Column '", id, "' not found")
     if (!code %in% names(dt)) stop("Column '", code, "' not found")
     
     setnames(dt, c(id, code), c("pid", "code"))
     
-    # Calculate prevalence
     prevalence <- dt[, .(n_patients = length(unique(pid))), by = code]
     total_patients <- dt[, length(unique(pid))]
     prevalence[, prevalence := (n_patients / total_patients) * 100]
     prevalence[, prevalence_truncated := ifelse(prevalence > 50, 100 - prevalence, prevalence)]
     
-    # Select candidates
     candidates <- prevalence[n_patients >= min_patients][order(prevalence_truncated, decreasing = TRUE)]
     candidates <- candidates[1:min(n, nrow(candidates))]
     
-    # Filter and format data
     result <- dt[code %in% candidates$code]
     result[, code := paste0(type, "_", code)]
     
@@ -61,7 +55,6 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
 #' @return Data table with recurrence assessment
 #' @export
 assess_recurrence <- function(dt, id, code, type, rank = Inf) {
-    # Input validation
     if (missing(dt) || (!is.data.table(dt) && !is.data.frame(dt))) {
         stop("'dt' must be a data.frame or data.table")
     }
@@ -78,22 +71,18 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
         stop("'rank' must be numeric")
     }
     
-    # Prepare data
     dt <- copy(dt)
     setDT(dt)
     
-    # Validate columns exist
     if (!id %in% names(dt)) stop("Column '", id, "' not found")
     if (!code %in% names(dt)) stop("Column '", code, "' not found")
     
     setnames(dt, c(id, code), c("pid", "code"))
     
-    # Calculate count cutoff
     count_cutoff <- if (rank == Inf) Inf else {
         dt[, .(count = .N), .(pid, code)][order(count, decreasing = TRUE)][rank, count]
     }
     
-    # Calculate recurrence patterns
     counts <- dt[, .(count = .N), .(pid, code)][count <= count_cutoff]
     quantiles <- dt[, .(count = .N), .(pid, code)][, .(
         Q1 = quantile(count, 0.25),
@@ -101,7 +90,6 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
         Q3 = quantile(count, 0.75)
     ), code][, .(code, Q1, Q2 = ifelse(Q1 == Q2, NA, Q2), Q3 = ifelse(Q2 == Q3, NA, Q3))]
     
-    # Merge and create recurrence indicators
     merged <- merge(counts, quantiles, by = "code", all.x = TRUE)
     patterns <- merged[, .(
         once = as.numeric(ifelse(count >= 1, 1, 0)),
@@ -109,7 +97,6 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
         freq = as.numeric(ifelse(!is.na(Q3) & count >= Q3, 1, ifelse(is.na(Q3), NA, 0)))
     ), .(pid, code)]
     
-    # Reshape to wide format
     melted <- melt(patterns, id.vars = c("pid", "code"))[!is.na(value)]
     melted[, code_type := paste(type, code, variable, sep = "_")]
     
@@ -145,8 +132,8 @@ rec_assess <- function(dt, id, code, type, rank = Inf) {
 #' @return 2x2 contingency table
 estBiasTable <- function(dt, expo, cova) {
     temp <- dt[, .(count = .N), by = c(expo, cova)]
-    data.table::setnames(temp, c(expo, cova), c("e", "c"))
-    temp <- merge(temp, data.table::CJ(e = c(0, 1), c = c(0, 1)), by = c("e", "c"), all.y = TRUE)
+    setnames(temp, c(expo, cova), c("e", "c"))
+    temp <- merge(temp, CJ(e = c(0, 1), c = c(0, 1)), by = c("e", "c"), all.y = TRUE)
     temp[is.na(count), count := 0]
     temp
 }
@@ -162,16 +149,14 @@ estBiasTable <- function(dt, expo, cova) {
 #' @param correction Apply 0.1 correction for zero cells
 #' @return Data table with bias estimates
 estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
-    data.table::setDT(hdpsCohort)
+    setDT(hdpsCohort)
     
-    # Get marginal counts using column names directly
-    e1 <- hdpsCohort[hdpsCohort[[expo]] == 1, .N]
-    e0 <- hdpsCohort[hdpsCohort[[expo]] == 0, .N]
-    d1 <- hdpsCohort[hdpsCohort[[outc]] == 1, .N]
-    d0 <- hdpsCohort[hdpsCohort[[outc]] == 0, .N]
+    e1 <- hdpsCohort[get(expo) == 1, .N]
+    e0 <- hdpsCohort[get(expo) == 0, .N]
+    d1 <- hdpsCohort[get(outc) == 1, .N]
+    d0 <- hdpsCohort[get(outc) == 0, .N]
     n <- hdpsCohort[, .N]
     
-    # Get exposure-covariate table
     temp <- estBiasTable(hdpsCohort, expo, cova)
     c1 <- temp[c == 1, sum(count)]
     c0 <- n - c1
@@ -180,14 +165,12 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
     e0c0 <- temp[e == 0 & c == 0, count]
     e1c0 <- temp[e == 1 & c == 0, count]
 
-    # Get outcome-covariate table
     temp <- estBiasTable(hdpsCohort, outc, cova)
     d0c1 <- temp[e == 0 & c == 1, count]
     d1c1 <- temp[e == 1 & c == 1, count]
     d0c0 <- temp[e == 0 & c == 0, count]
     d1c0 <- temp[e == 1 & c == 0, count]
     
-    # Apply correction if needed
     if (correction) {
         if (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0) {
             e0c1 <- e0c1 + 0.1
@@ -203,19 +186,17 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
         }
     }
 
-    # Calculate proportions and ratios
     pc1 <- e1c1 / e1
     pc0 <- ifelse(e0c1 / e0 == 0, 0.1, e0c1 / e0)
     rrCE <- ifelse(pc1 / pc0 == 0, NA, pc1 / pc0)
     rrCD <- ifelse((d1c1 / c1) / (d1c0 / c0) == 0, NA, (d1c1 / c1) / (d1c0 / c0))
 
-    # Calculate bias
     bias <- (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1)
     absLogBias <- abs(log(bias))
     ce_strength <- abs(rrCE - 1)
     cd_strength <- abs(rrCD - 1)
     
-    data.table::data.table(
+    data.table(
         code = cova, e1, e0, d1, d0, c1, c0,
         e1c1, e0c1, e1c0, e0c0, d1c1, d0c1, d1c0, d0c0,
         pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
@@ -240,29 +221,17 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, parallel = FALSE,
             n_cores <- min(4, parallel::detectCores() - 1)
         }
         
-        # Use parLapply with proper data.table setup for all platforms
         cl <- parallel::makeCluster(n_cores)
-        
-        # Load data.table and required packages in workers
         parallel::clusterEvalQ(cl, {
             library(data.table)
-            library(pbapply)
         })
-        
-        # Export all required functions and variables
         parallel::clusterExport(cl, c("estBias", "estBiasTable", "dt", "expo", "outc", "correction"), envir = environment())
         
-        # Create a wrapper function that ensures data.table is available
-        estBias_wrapper <- function(x) {
-            # Force load data.table in worker
-            suppressPackageStartupMessages(library(data.table))
+        result <- parallel::parLapply(cl, cova, function(x) {
             estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-        }
-        
-        result <- parallel::parLapply(cl, cova, estBias_wrapper)
+        })
         
         parallel::stopCluster(cl)
-        
         rbindlist(result)
     } else {
         rbindlist(pbapply::pblapply(cova, function(x) {
