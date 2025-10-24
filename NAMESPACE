@@ -2,6 +2,7 @@
 
 export(assess_recurrence)
 export(hdps_input)
+export(hdps_interactive)
 export(hdps_multi_domain)
 export(hdps_screen)
 export(identify_candidates)

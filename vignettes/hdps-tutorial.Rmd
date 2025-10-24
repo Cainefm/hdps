@@ -26,16 +26,14 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-The `hdps` package implements the High-Dimensional Propensity Score (HDPS) algorithm for automated covariate selection in observational studies. This tutorial demonstrates the key features and workflows of the package.
+The `hdps` package implements the High-Dimensional Propensity Score (HDPS) algorithm for automated covariate selection in observational studies.
 
 ## Key Features
 
-- **Modular 3-step workflow**: Identify candidates → Assess recurrence → Prioritize covariates
-- **Domain-specific handling**: Support for diagnosis (dx), procedures (px), and medications (rx)
-- **Parallel processing**: Optional parallel processing for large datasets
-- **Enhanced visualizations**: Interactive plots for bias analysis
-- **Flexible data input**: Support for various data formats
-- **Comprehensive testing**: Full test coverage with testthat
+- **Modular workflow**: 3-step process (identify → assess → prioritize)
+- **Performance**: Parallel processing for large datasets
+- **Visualizations**: Interactive plots for bias analysis
+- **Data flexibility**: Multiple input formats
 
 # Installation
 
@@ -249,13 +247,11 @@ data_long <- hdps_input(dx_data, format = "long")
 wide_data <- dcast(dx_data, pid ~ code, value.var = "code", fun.aggregate = length)
 data_wide <- hdps_input(wide_data, format = "wide", value_col = "count")
 
-# Matrix format
-matrix_data <- matrix(rbinom(100, 1, 0.5), nrow = 10, ncol = 10)
-rownames(matrix_data) <- 1:10
-colnames(matrix_data) <- paste0("VAR", 1:10)
-data_matrix <- hdps_input(matrix_data, format = "matrix")
-
-head(data_matrix)
+# Matrix format (example)
+# matrix_data <- matrix(rbinom(100, 1, 0.5), nrow = 10, ncol = 10)
+# rownames(matrix_data) <- paste0("P", 1:10)
+# colnames(matrix_data) <- paste0("VAR", 1:10)
+# data_matrix <- hdps_input(matrix_data, format = "matrix")
 ```
 
 # Performance Tips
@@ -339,7 +335,3 @@ The `hdps` package provides a comprehensive solution for high-dimensional propen
 - **Flexible data input** for various formats
 
 For more information, see the package documentation and examples.
-
-# References
-
-Schneeweiss, S., Rassen, J. A., Glynn, R. J., Avorn, J., Mogun, H., & Brookhart, M. A. (2009). High-dimensional propensity score adjustment in studies of treatment effects using health care claims data. *Epidemiology*, 20(4), 512-522.

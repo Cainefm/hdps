@@ -1,7 +1,7 @@
 Package: hdps
 Type: Package
-Title: A Package for High Dimensional Propensity Score
-Version: 0.9.1
+Title: High-Dimensional Propensity Score Analysis
+Version: 0.9.2
 Authors@R: c(
     person(given = "Min",
            family = "Fan",
@@ -12,7 +12,7 @@ Authors@R: c(
            family = "Chueng",
            role = c("aut"),
            email = "edmundcc@connect.hku.hk"))
-Description: A Package for High Dimensional Propensity Score.
+Description: Automated covariate selection for observational studies using the High-Dimensional Propensity Score (HDPS) algorithm. Provides modular workflow, parallel processing, interactive visualizations, and comprehensive documentation for epidemiological research.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -25,6 +25,8 @@ Suggests:
     knitr,
     ggplot2,
     plotly,
-    pryr
-# VignetteBuilder: knitr
+    pryr,
+    DT,
+    shiny
+VignetteBuilder: knitr
 RoxygenNote: 7.2.3
