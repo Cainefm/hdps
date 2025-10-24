@@ -440,7 +440,7 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
             # Prepare exposure/outcome data
             if (!is.null(master_data)) {
                 # Use provided master data
-                cohort_data <- copy(master_data)
+                cohort_data <- as.data.table(copy(master_data))
                 if (!id_col %in% names(cohort_data)) {
                     stop("Column '", id_col, "' not found in master_data")
                 }
@@ -450,7 +450,7 @@ hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col,
                 setnames(cohort_data, id_col, "pid")
             } else {
                 # Use exposure/outcome from same dataset
-                cohort_data <- data[, c(id_col, exposure_col, outcome_col), with = FALSE]
+                cohort_data <- as.data.table(data[, c(id_col, exposure_col, outcome_col), with = FALSE])
                 setnames(cohort_data, id_col, "pid")
             }
             
