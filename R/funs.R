@@ -37,6 +37,9 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
         return(list(candidates = data.table(), data = dt[0], patient_ids = character(0)))
     }
     
+    # Create copy to avoid modifying original data
+    dt <- copy(dt)
+    
     # Rename columns once at start
     setnames(dt, c(id, code), c("pid", "code"))
     
@@ -93,6 +96,9 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
     if (dt[, sum(!is.na(get(id)) & !is.na(get(code)))] == 0) {
         return(data.table(pid = character(0)))
     }
+    
+    # Create copy to avoid modifying original data
+    dt <- copy(dt)
     
     # Rename columns once at start
     setnames(dt, c(id, code), c("pid", "code"))
