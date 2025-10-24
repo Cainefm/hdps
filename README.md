@@ -27,7 +27,7 @@ devtools::install_github("Cainefm/hdps")
 ### From Local Package File
 ```r
 # Install from .tar.gz file
-install.packages("hdps_0.9.1.tar.gz", repos = NULL, type = "source")
+install.packages("hdps_0.9.2.tar.gz", repos = NULL, type = "source")
 ```
 
 ### Dependencies
@@ -60,6 +60,8 @@ results <- hdps_screen(
 # View results
 head(results$prioritization)
 ```
+<img src="https://i.imgur.com/H8uTD1K.png" alt="Sample output of hdps_screen prioritization result" width="650"/>
+
 
 ### 3-Step Workflow
 ```r
@@ -73,12 +75,16 @@ recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
 cohort_data <- merge(recurrence, master, by = "pid", all.x = TRUE)
 prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 ```
+<img src="https://i.imgur.com/fvAjZTC.png" alt="Plot of absolute log-bias for top prioritized covariates by hdps_screen" width="650"/>
 
 ### Interactive Analysis
 ```r
 # Launch interactive Shiny app
 hdps_interactive()
 ```
+<img src="https://i.imgur.com/2jzNJFu.jpg" alt="Screenshot of the HDPS Interactive Covariate Selection Shiny app, showing bias distribution, covariate strength, and bias vs prevalence plots." width="650"/>
+
+
 
 ## 📊 Enhanced Visualizations
 
