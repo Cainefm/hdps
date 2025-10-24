@@ -240,25 +240,28 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, parallel = FALSE,
             n_cores <- min(4, parallel::detectCores() - 1)
         }
         
-        # Use mclapply for better compatibility with data.table
-        if (.Platform$OS.type == "windows") {
-            # Windows doesn't support mclapply, use parLapply
-            cl <- parallel::makeCluster(n_cores)
-            parallel::clusterEvalQ(cl, {
-                library(data.table)
-            })
-            parallel::clusterExport(cl, c("estBias", "estBiasTable", "dt", "expo", "outc", "correction"), envir = environment())
-            
-            result <- parallel::parLapply(cl, cova, function(x) {
-                estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-            })
-            parallel::stopCluster(cl)
-        } else {
-            # Unix-like systems can use mclapply
-            result <- parallel::mclapply(cova, function(x) {
-                estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-            }, mc.cores = n_cores)
+        # Use parLapply with proper data.table setup for all platforms
+        cl <- parallel::makeCluster(n_cores)
+        
+        # Load data.table and required packages in workers
+        parallel::clusterEvalQ(cl, {
+            library(data.table)
+            library(pbapply)
+        })
+        
+        # Export all required functions and variables
+        parallel::clusterExport(cl, c("estBias", "estBiasTable", "dt", "expo", "outc", "correction"), envir = environment())
+        
+        # Create a wrapper function that ensures data.table is available
+        estBias_wrapper <- function(x) {
+            # Force load data.table in worker
+            suppressPackageStartupMessages(library(data.table))
+            estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
         }
+        
+        result <- parallel::parLapply(cl, cova, estBias_wrapper)
+        
+        parallel::stopCluster(cl)
         
         rbindlist(result)
     } else {
