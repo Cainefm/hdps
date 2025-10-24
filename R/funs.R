@@ -445,9 +445,9 @@ plot_bias_vs_prevalence <- function(hdps_result, interactive = FALSE) {
 #' @return Complete HDPS results
 #' @export
 #'
-hdps_screen <- function(data, id_col, code_col, exposure_col, outcome_col, 
-                       type_col = NULL, master_data = NULL, n_candidates = 200, min_patients = 10, 
-                       correction = TRUE) {
+hdps <- function(data, id_col, code_col, exposure_col, outcome_col, 
+                type_col = NULL, master_data = NULL, n_candidates = 200, min_patients = 10, 
+                correction = TRUE) {
     
     # Input validation
     if (missing(data) || is.null(data)) {

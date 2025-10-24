@@ -46,7 +46,7 @@ data(dx)  # Example diagnosis data
 data(master)  # Example master table with exposure/outcome
 
 # Complete HDPS workflow in one function
-results <- hdps_screen(
+results <- hdps(
   data = dx,
   id_col = "pid",
   code_col = "icd9code", 
@@ -60,7 +60,7 @@ results <- hdps_screen(
 # View results
 head(results$prioritization)
 ```
-<img src="data/Snipaste_2025-10-24_17-07-48.png" alt="Sample output of hdps_screen prioritization result" width="650"/>
+<img src="data/Snipaste_2025-10-24_17-07-48.png" alt="Sample output of hdps prioritization result" width="650"/>
 
 
 ### 3-Step Workflow
@@ -75,7 +75,7 @@ recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
 cohort_data <- merge(recurrence, master, by = "pid", all.x = TRUE)
 prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 ```
-<img src="data/Snipaste_2025-10-24_17-09-12.png" alt="Plot of absolute log-bias for top prioritized covariates by hdps_screen" width="650"/>
+<img src="data/Snipaste_2025-10-24_17-09-12.png" alt="Plot of absolute log-bias for top prioritized covariates by hdps" width="650"/>
 
 ### Interactive Analysis
 ```r
@@ -111,7 +111,7 @@ plot_covariate_strength(prioritization, interactive = TRUE)
 ## 📚 Documentation
 
 - **Tutorial**: `vignette("hdps-tutorial")`
-- **Function Help**: `help(hdps_screen)`
+- **Function Help**: `help(hdps)`
 - **Interactive App**: `hdps_interactive()`
 
 ## 🧪 Testing
