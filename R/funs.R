@@ -163,14 +163,20 @@ rec_assess <- function(dt, id, code, type, rank = Inf) {
 #' @param cova Column name for covariate
 #' @return 2x2 contingency table
 estBiasTable <- function(dt, expo, cova) {
-    # Use .() method for better parallel compatibility
-    temp <- dt[, .(count = .N), by = .(get(expo), get(cova))]
-    # Get the actual column names and rename them
-    col_names <- names(temp)
-    setnames(temp, col_names[1:2], c("e", "c"))
-    temp <- merge(temp, CJ(e = c(0, 1), c = c(0, 1)), by = c("e", "c"), all.y = TRUE)
-    temp[is.na(count), count := 0]
-    temp
+    # Optimized version - direct column access and pre-allocated result
+    temp <- dt[, .(count = .N), by = c(expo, cova)]
+    setnames(temp, c(expo, cova), c("e", "c"))
+    
+    # Create complete 2x2 table directly
+    result <- data.table(
+        e = rep(c(0, 1), each = 2),
+        c = rep(c(0, 1), 2),
+        count = 0
+    )
+    
+    # Merge and fill missing combinations
+    result[temp, count := i.count, on = c("e", "c")]
+    result
 }
 
 
