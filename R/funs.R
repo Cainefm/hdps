@@ -145,8 +145,8 @@ rec_assess <- function(dt, id, code, type, rank = Inf) {
 #' @return 2x2 contingency table
 estBiasTable <- function(dt, expo, cova) {
     temp <- dt[, .(count = .N), by = c(expo, cova)]
-    setnames(temp, c(expo, cova), c("e", "c"))
-    temp <- merge(temp, CJ(e = c(0, 1), c = c(0, 1)), by = c("e", "c"), all.y = TRUE)
+    data.table::setnames(temp, c(expo, cova), c("e", "c"))
+    temp <- merge(temp, data.table::CJ(e = c(0, 1), c = c(0, 1)), by = c("e", "c"), all.y = TRUE)
     temp[is.na(count), count := 0]
     temp
 }
@@ -162,13 +162,13 @@ estBiasTable <- function(dt, expo, cova) {
 #' @param correction Apply 0.1 correction for zero cells
 #' @return Data table with bias estimates
 estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
-    setDT(hdpsCohort)
+    data.table::setDT(hdpsCohort)
     
-    # Get marginal counts
-    e1 <- hdpsCohort[get(expo) == 1, .N]
-    e0 <- hdpsCohort[get(expo) == 0, .N]
-    d1 <- hdpsCohort[get(outc) == 1, .N]
-    d0 <- hdpsCohort[get(outc) == 0, .N]
+    # Get marginal counts using column names directly
+    e1 <- hdpsCohort[hdpsCohort[[expo]] == 1, .N]
+    e0 <- hdpsCohort[hdpsCohort[[expo]] == 0, .N]
+    d1 <- hdpsCohort[hdpsCohort[[outc]] == 1, .N]
+    d0 <- hdpsCohort[hdpsCohort[[outc]] == 0, .N]
     n <- hdpsCohort[, .N]
     
     # Get exposure-covariate table
@@ -215,7 +215,7 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
     ce_strength <- abs(rrCE - 1)
     cd_strength <- abs(rrCD - 1)
     
-    data.table(
+    data.table::data.table(
         code = cova, e1, e0, d1, d0, c1, c0,
         e1c1, e0c1, e1c0, e0c0, d1c1, d0c1, d1c0, d0c0,
         pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
@@ -240,14 +240,26 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, parallel = FALSE,
             n_cores <- min(4, parallel::detectCores() - 1)
         }
         
-        cl <- parallel::makeCluster(n_cores)
-        parallel::clusterExport(cl, c("estBias", "estBiasTable"), envir = environment())
+        # Use mclapply for better compatibility with data.table
+        if (.Platform$OS.type == "windows") {
+            # Windows doesn't support mclapply, use parLapply
+            cl <- parallel::makeCluster(n_cores)
+            parallel::clusterEvalQ(cl, {
+                library(data.table)
+            })
+            parallel::clusterExport(cl, c("estBias", "estBiasTable", "dt", "expo", "outc", "correction"), envir = environment())
+            
+            result <- parallel::parLapply(cl, cova, function(x) {
+                estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
+            })
+            parallel::stopCluster(cl)
+        } else {
+            # Unix-like systems can use mclapply
+            result <- parallel::mclapply(cova, function(x) {
+                estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
+            }, mc.cores = n_cores)
+        }
         
-        result <- parallel::parLapply(cl, cova, function(x) {
-            estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-        })
-        
-        parallel::stopCluster(cl)
         rbindlist(result)
     } else {
         rbindlist(pbapply::pblapply(cova, function(x) {
