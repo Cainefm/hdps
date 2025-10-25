@@ -250,6 +250,96 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
         pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
     )
 }
+
+#' Optimized bias estimation with pre-calculated statistics
+#'
+#' @param hdpsCohort Dataset with exposure, outcome, and covariate
+#' @param cova Column name for covariate
+#' @param expo Column name for exposure
+#' @param outc Column name for outcome
+#' @param stats Pre-calculated statistics (optional)
+#' @param correction Apply 0.1 correction for zero cells
+#' @return Data table with bias estimates
+#' @export
+estBias_optimized <- function(hdpsCohort, cova, expo, outc, stats = NULL, correction = TRUE) {
+    setDT(hdpsCohort)
+    
+    # Use pre-calculated statistics if available, otherwise calculate
+    if (is.null(stats)) {
+        e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
+        e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
+        d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
+        d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
+        n <- nrow(hdpsCohort)
+    } else {
+        e1 <- stats$e1
+        e0 <- stats$e0
+        d1 <- stats$d1
+        d0 <- stats$d0
+        n <- stats$n
+    }
+    
+    # Single pass through data for both exposure and outcome tables
+    # Create combined contingency tables efficiently
+    expo_cova_table <- table(hdpsCohort[[expo]], hdpsCohort[[cova]], useNA = "no")
+    outc_cova_table <- table(hdpsCohort[[outc]], hdpsCohort[[cova]], useNA = "no")
+    
+    # Extract counts with safe indexing
+    e0c1 <- ifelse(nrow(expo_cova_table) >= 1 && ncol(expo_cova_table) >= 2, 
+                   expo_cova_table[1, 2], 0)
+    e1c1 <- ifelse(nrow(expo_cova_table) >= 2 && ncol(expo_cova_table) >= 2, 
+                   expo_cova_table[2, 2], 0)
+    e0c0 <- ifelse(nrow(expo_cova_table) >= 1 && ncol(expo_cova_table) >= 1, 
+                   expo_cova_table[1, 1], 0)
+    e1c0 <- ifelse(nrow(expo_cova_table) >= 2 && ncol(expo_cova_table) >= 1, 
+                   expo_cova_table[2, 1], 0)
+    
+    d0c1 <- ifelse(nrow(outc_cova_table) >= 1 && ncol(outc_cova_table) >= 2, 
+                   outc_cova_table[1, 2], 0)
+    d1c1 <- ifelse(nrow(outc_cova_table) >= 2 && ncol(outc_cova_table) >= 2, 
+                   outc_cova_table[2, 2], 0)
+    d0c0 <- ifelse(nrow(outc_cova_table) >= 1 && ncol(outc_cova_table) >= 1, 
+                   outc_cova_table[1, 1], 0)
+    d1c0 <- ifelse(nrow(outc_cova_table) >= 2 && ncol(outc_cova_table) >= 1, 
+                   outc_cova_table[2, 1], 0)
+    
+    c1 <- e1c1 + e0c1
+    c0 <- e1c0 + e0c0
+    
+    # Apply correction if needed
+    if (correction) {
+        if (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0) {
+            e0c1 <- e0c1 + 0.1
+            e1c1 <- e1c1 + 0.1
+            e0c0 <- e0c0 + 0.1
+            e1c0 <- e1c0 + 0.1
+        }
+        if (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0) {
+            d0c1 <- d0c1 + 0.1
+            d1c1 <- d1c1 + 0.1
+            d0c0 <- d0c0 + 0.1
+            d1c0 <- d1c0 + 0.1
+        }
+    }
+    
+    # Calculate proportions and ratios
+    pc1 <- c1 / n
+    pc0 <- c0 / n
+    
+    rrCE <- ifelse((e1c1 / c1) / (e1c0 / c0) == 0, NA, (e1c1 / c1) / (e1c0 / c0))
+    rrCD <- ifelse((d1c1 / c1) / (d1c0 / c0) == 0, NA, (d1c1 / c1) / (d1c0 / c0))
+    
+    bias <- (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1)
+    absLogBias <- abs(log(bias))
+    ce_strength <- abs(rrCE - 1)
+    cd_strength <- abs(rrCD - 1)
+    
+    data.table(
+        code = cova, e1, e0, d1, d0, c1, c0,
+        e1c1, e0c1, e1c0, e0c0, d1c1, d0c1, d1c0, d0c0,
+        pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
+    )
+}
 #' Prioritize covariates using bias estimation
 #'
 #' @param dt Dataset after recurrence assessment
@@ -259,12 +349,74 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
 #' @param correction Apply 0.1 correction for zero cells
 #' @return Data table with bias estimates for all covariates
 #' @export
-prioritize <- function(dt, pid, expo, outc, correction = TRUE) {
+prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL, 
+                      batch_size = 50, progress = TRUE) {
     cova <- setdiff(colnames(dt), c(expo, outc, pid))
     
-    rbindlist(pbapply::pblapply(cova, function(x) {
-        estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-    }))
+    # Auto-detect optimal number of cores
+    if (is.null(n_cores)) {
+        n_cores <- min(parallel::detectCores() - 1, 4)
+        n_cores <- max(1, n_cores)  # At least 1 core
+    }
+    
+    # Pre-calculate common statistics once
+    stats <- list(
+        e1 = sum(dt[[expo]] == 1, na.rm = TRUE),
+        e0 = sum(dt[[expo]] == 0, na.rm = TRUE),
+        d1 = sum(dt[[outc]] == 1, na.rm = TRUE),
+        d0 = sum(dt[[outc]] == 0, na.rm = TRUE),
+        n = nrow(dt)
+    )
+    
+    # Use parallel processing for large datasets
+    if (n_cores > 1 && length(cova) > 10) {
+        # Set up parallel cluster
+        cl <- parallel::makeCluster(n_cores)
+        
+        # Export necessary functions and data
+        parallel::clusterExport(cl, c("estBias", "estBiasTable", "stats"), 
+                               envir = environment())
+        
+        # Process in batches for memory efficiency
+        results <- list()
+        n_batches <- ceiling(length(cova) / batch_size)
+        
+        for (i in seq_len(n_batches)) {
+            start_idx <- (i - 1) * batch_size + 1
+            end_idx <- min(i * batch_size, length(cova))
+            batch_cova <- cova[start_idx:end_idx]
+            
+            # Process batch in parallel
+            batch_results <- parallel::parLapply(cl, batch_cova, function(x) {
+                estBias_optimized(dt, cova = x, expo = expo, outc = outc, 
+                                stats = stats, correction = correction)
+            })
+            
+            results <- c(results, batch_results)
+            
+            # Force garbage collection between batches
+            if (i < n_batches) {
+                gc()
+            }
+        }
+        
+        parallel::stopCluster(cl)
+        rbindlist(results)
+        
+    } else {
+        # Sequential processing for small datasets or single core
+        if (progress && length(cova) > 5) {
+            rbindlist(pbapply::pblapply(cova, function(x) {
+                estBias_optimized(dt, cova = x, expo = expo, outc = outc, 
+                                stats = stats, correction = correction)
+            }))
+        } else {
+            rbindlist(lapply(cova, function(x) {
+                estBias_optimized(dt, cova = x, expo = expo, outc = outc, 
+                                stats = stats, correction = correction)
+            }))
+        }
+    }
 }
 
 #' HDPS workflow for multiple domains
@@ -506,7 +658,8 @@ hdps <- function(data, id_col, code_col, exposure_col, outcome_col,
             cohort_data <- merge(recurrence, cohort_data, by = "pid", all.x = TRUE)
             
             prioritization <- prioritize(cohort_data, "pid", exposure_col, outcome_col, 
-                                       correction = correction)
+                                       correction = correction, n_cores = NULL, 
+                                       batch_size = 50, progress = TRUE)
             
             return(list(
                 candidates = candidates,
@@ -564,4 +717,49 @@ hdps_input <- function(data, format = c("long", "wide", "matrix"),
             )
         }
     )
+}
+
+#' Performance monitoring and optimization utilities
+#'
+#' @param dt Dataset to monitor
+#' @param operation Operation name for logging
+#' @return Performance metrics
+#' @export
+monitor_performance <- function(dt, operation = "operation") {
+    start_time <- Sys.time()
+    start_memory <- gc()[, 2]
+    
+    return(list(
+        operation = operation,
+        start_time = start_time,
+        start_memory = start_memory,
+        n_rows = nrow(dt),
+        n_cols = ncol(dt)
+    ))
+}
+
+#' Complete performance monitoring
+#'
+#' @param start_metrics Starting metrics from monitor_performance
+#' @return Performance summary
+#' @export
+complete_performance <- function(start_metrics) {
+    end_time <- Sys.time()
+    end_memory <- gc()[, 2]
+    
+    duration <- as.numeric(difftime(end_time, start_metrics$start_time, units = "secs"))
+    memory_used <- end_memory - start_metrics$start_memory
+    
+    cat(sprintf("Performance Summary for %s:\n", start_metrics$operation))
+    cat(sprintf("  Duration: %.2f seconds\n", duration))
+    cat(sprintf("  Memory used: %.1f MB\n", memory_used))
+    cat(sprintf("  Data size: %d rows × %d columns\n", start_metrics$n_rows, start_metrics$n_cols))
+    cat(sprintf("  Processing rate: %.0f rows/second\n", start_metrics$n_rows / duration))
+    
+    return(list(
+        operation = start_metrics$operation,
+        duration = duration,
+        memory_used = memory_used,
+        processing_rate = start_metrics$n_rows / duration
+    ))
 }
