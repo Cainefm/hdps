@@ -415,11 +415,13 @@ plot_bias_vs_prevalence <- function(hdps_result) {
 #' @param exposure_col Column name for exposure
 #' @param outcome_col Column name for outcome
 #' @param type_col Column name for domain type (if multi-domain)
+#' @param master_data Master dataset with exposure and outcome (if separate from data)
 #' @param n_candidates Maximum number of candidates per domain
 #' @param min_patients Minimum number of patients required for a covariate to be considered (filters out rare codes with insufficient sample size)
-#' @param parallel Use parallel processing
-#' @param n_cores Number of cores for parallel processing
 #' @param correction Apply correction for rare outcomes
+#' @param n_cores Number of cores for parallel processing (NULL for auto-detection)
+#' @param batch_size Batch size for parallel processing
+#' @param progress Show progress bar
 #'
 #' @return Complete HDPS results
 #' @export

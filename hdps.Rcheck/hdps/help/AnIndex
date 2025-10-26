@@ -4,6 +4,7 @@ estBias	estBias
 hdps	hdps
 hdps_input	hdps_input
 hdps_interactive	hdps_interactive
+identify_candidates	identify_candidates
 master	master
 plot_bias_distribution	plot_bias_distribution
 plot_bias_vs_prevalence	plot_bias_vs_prevalence

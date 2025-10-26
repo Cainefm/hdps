@@ -33,15 +33,19 @@ hdps(
 
 \item{type_col}{Column name for domain type (if multi-domain)}
 
+\item{master_data}{Master dataset with exposure and outcome (if separate from data)}
+
 \item{n_candidates}{Maximum number of candidates per domain}
 
 \item{min_patients}{Minimum number of patients required for a covariate to be considered (filters out rare codes with insufficient sample size)}
 
 \item{correction}{Apply correction for rare outcomes}
 
-\item{n_cores}{Number of cores for parallel processing}
+\item{n_cores}{Number of cores for parallel processing (NULL for auto-detection)}
 
-\item{parallel}{Use parallel processing}
+\item{batch_size}{Batch size for parallel processing}
+
+\item{progress}{Show progress bar}
 }
 \value{
 Complete HDPS results
