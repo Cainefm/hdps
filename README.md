@@ -10,6 +10,7 @@ Automated covariate selection for observational studies using the High-Dimension
 
 - **🚀 Modular workflow**: 3-step process (identify → assess → prioritize)
 - **⚡ High Performance**: 20-30x speed improvement with optimized algorithms
+- **🔄 Parallel Processing**: Multi-core support with batch processing for large datasets
 - **💾 Memory Efficient**: Minimal memory overhead with smart data handling
 - **📊 Visualizations**: Interactive plots for bias analysis
 - **🔄 Data flexibility**: Multiple input formats (long, wide, matrix)
@@ -83,6 +84,24 @@ recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
 cohort_data <- merge(recurrence, master, by = "pid", all.x = TRUE)
 prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 ```
+
+### Advanced Options: Parallel Processing
+```r
+# Use parallel processing for large datasets
+results <- hdps(data = dx, 
+                id_col = "pid", 
+                code_col = "code", 
+                exposure_col = "exposure", 
+                outcome_col = "outcome",
+                n_cores = 4,        # Number of CPU cores
+                batch_size = 50,    # Batch size for parallel processing
+                progress = TRUE)     # Show progress bar
+```
+
+**Performance Parameters**:
+- `n_cores`: Number of CPU cores for parallel processing (NULL for auto-detection)
+- `batch_size`: Batch size for parallel processing (default: 50)
+- `progress`: Show progress bar during processing (default: TRUE)
 
 ### Interactive Analysis
 ```r
