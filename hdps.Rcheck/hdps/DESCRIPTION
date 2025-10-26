@@ -21,8 +21,8 @@ Suggests: testthat (>= 3.0.0), knitr (>= 1.20), rmarkdown (>= 2.0),
 VignetteBuilder: knitr
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2025-10-26 09:13:55 UTC; fanmin
+Packaged: 2025-10-26 12:31:06 UTC; fanmin
 Author: Min Fan [aut, cre] (ORCID: <https://orcid.org/0000-0001-9074-633X>),
   Edmund Chueng [aut]
 Maintainer: Min Fan <minfan@connect.hku.hk>
-Built: R 4.5.0; ; 2025-10-26 09:14:05 UTC; unix
+Built: R 4.5.0; ; 2025-10-26 12:32:01 UTC; unix
