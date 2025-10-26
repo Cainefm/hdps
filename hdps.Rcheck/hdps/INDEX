@@ -1,8 +1,10 @@
 assess_recurrence       Assess recurrence of covariates
+dx                      Example Diagnosis Data
 estBias                 Covariate assessment wrapper function
 hdps                    Complete HDPS workflow
 hdps_input              Flexible data input handler
 hdps_interactive        Interactive HDPS Covariate Selection App
+master                  Example Master Table with Exposure and Outcome
 plot_bias_distribution
                         Plot bias distribution for top covariates
 plot_bias_vs_prevalence

@@ -1,0 +1,116 @@
+
+R version 4.5.0 (2025-04-11) -- "How About a Twenty-Six"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "hdps"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('hdps')
+Loading required package: data.table
+Loading required package: pbapply
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("dx")
+> ### * dx
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: dx
+> ### Title: Example Diagnosis Data
+> ### Aliases: dx
+> ### Keywords: datasets
+> 
+> ### ** Examples
+> 
+> data(dx)
+> head(dx)
+      pid icd9code
+   <char>   <char>
+1:  P0001    272.1
+2:  P0002   496.00
+3:  P0003   564.02
+4:  P0003   496.01
+5:  P0004    272.0
+6:  P0005   780.52
+> str(dx)
+Classes ‘data.table’ and 'data.frame':	3176 obs. of  2 variables:
+ $ pid     : chr  "P0001" "P0002" "P0003" "P0003" ...
+ $ icd9code: chr  "272.1" "496.00" "564.02" "496.01" ...
+ - attr(*, ".internal.selfref")=<externalptr> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("master")
+> ### * master
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: master
+> ### Title: Example Master Table with Exposure and Outcome
+> ### Aliases: master
+> ### Keywords: datasets
+> 
+> ### ** Examples
+> 
+> data(master)
+> head(master)
+      pid exposure outcome
+   <char>    <int>   <int>
+1:  P0001        0       0
+2:  P0002        1       0
+3:  P0003        0       0
+4:  P0004        1       1
+5:  P0005        1       0
+6:  P0006        0       0
+> str(master)
+Classes ‘data.table’ and 'data.frame':	1000 obs. of  3 variables:
+ $ pid     : chr  "P0001" "P0002" "P0003" "P0004" ...
+ $ exposure: int  0 1 0 1 1 0 0 1 0 0 ...
+ $ outcome : int  0 0 0 1 0 0 0 0 0 0 ...
+ - attr(*, ".internal.selfref")=<externalptr> 
+ - attr(*, "index")= int(0) 
+  ..- attr(*, "__pid")= int(0) 
+> table(master$exposure)
+
+  0   1 
+705 295 
+> table(master$outcome)
+
+  0   1 
+861 139 
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  0.082 0.008 0.094 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')
