@@ -71,7 +71,16 @@ results <- hdps(
 head(results$prioritization)
 ```
 
-**Sample Output**: The `prioritization` data.table shows covariates ranked by bias, with columns for bias estimates, prevalence, and strength measures.
+**Sample Output**: 
+```
+                   code    e1    e0    d1    d0    c1    c0  e1c1  e0c1  e1c0  e0c0  d1c1  d0c1  d1c0  d0c0   pc1   pc0      rrCE       rrCD       bias absLogBias ce_strength cd_strength
+                 <char> <int> <int> <int> <int> <int> <int> <int> <int> <int> <int> <num> <num> <num> <num> <num> <num>     <num>      <num>      <num>      <num>       <num>       <num>
+ 1: cov_cov_250.00_freq   295   705   139   861    34   966    15    19   280   686   4.0  30.0 135.0 831.0 0.034 0.966 1.5220588 0.84183007  1.1740003  0.1604169   0.5220588  0.15816993
+ 2: cov_cov_250.00_once   295   705   139   861    33   967    18    15   277   690   5.0  28.0 134.0 833.0 0.033 0.967 1.9041680 1.09339665  0.9199933  0.0833889   0.9041680  0.09339665
+ 3: cov_cov_250.00_spor   295   705   139   861    34   966    17    17   278   688   0.1  34.1 139.1 827.1 0.034 0.966 1.7374101 0.02042542 17.9913866  2.8898931   0.7374101  0.97957458
+```
+
+The `prioritization` data.table shows covariates ranked by bias, with columns for bias estimates, prevalence, and strength measures.
 
 
 ### 3-Step Workflow
@@ -89,6 +98,8 @@ prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 
 **Visualization**: Use `plot_bias_distribution(prioritization)` to create bias distribution plots showing the top prioritized covariates.
 
+![Bias Distribution Plot](inst/extdata/bias_distribution.png)
+
 ### Interactive Analysis
 ```r
 # Launch interactive Shiny app
@@ -96,6 +107,8 @@ hdps_interactive()
 ```
 
 **Interactive Features**: The Shiny app provides real-time covariate selection with interactive plots for bias distribution, covariate strength relationships, and bias vs prevalence analysis.
+
+![Interactive HDPS App](inst/extdata/interactive_app.png)
 
 
 
@@ -107,17 +120,23 @@ hdps_interactive()
 plot_bias_distribution(prioritization, top_n = 20)
 ```
 
+![Bias Distribution](inst/extdata/bias_distribution.png)
+
 ### Covariate Strength Relationships
 ```r
 # Plot CE vs CD strength relationships
 plot_covariate_strength(prioritization)
 ```
 
+![Covariate Strength](inst/extdata/covariate_strength.png)
+
 ### Additional Plots
 ```r
 # Create additional visualizations
 plot_bias_vs_prevalence(prioritization)
 ```
+
+![Bias vs Prevalence](inst/extdata/bias_vs_prevalence.png)
 
 ## 🔧 Advanced Options
 
