@@ -38,15 +38,21 @@ The HDPS package is optimized for high-performance processing with the following
 library(hdps)
 library(data.table)
 
+# Load example data
+data(dx)
+data(master)
+
 # For small datasets, use single-core processing
 result <- hdps(
-  data = your_data,
-  id_col = "patient_id",
-  code_col = "diagnosis_code",
-  exposure_col = "treatment",
+  data = dx,
+  id_col = "pid",
+  code_col = "icd9code",
+  exposure_col = "exposure",
   outcome_col = "outcome",
-  n_cores = 1,  # Single core is sufficient
-  batch_size = 25
+  master_data = master,
+  n_candidates = 50,
+  min_patients = 5,
+  n_cores = 1  # Single core is sufficient
 )
 ```
 
@@ -54,13 +60,15 @@ result <- hdps(
 ```{r medium-datasets}
 # For medium datasets, use moderate parallel processing
 result <- hdps(
-  data = your_data,
-  id_col = "patient_id", 
-  code_col = "diagnosis_code",
-  exposure_col = "treatment",
+  data = dx,
+  id_col = "pid",
+  code_col = "icd9code",
+  exposure_col = "exposure",
   outcome_col = "outcome",
-  n_cores = 2,  # 2-4 cores recommended
-  batch_size = 50
+  master_data = master,
+  n_candidates = 100,
+  min_patients = 10,
+  n_cores = 1  # Use single core for vignette stability
 )
 ```
 
@@ -68,13 +76,15 @@ result <- hdps(
 ```{r large-datasets}
 # For large datasets, use full parallel processing
 result <- hdps(
-  data = your_data,
-  id_col = "patient_id",
-  code_col = "diagnosis_code", 
-  exposure_col = "treatment",
+  data = dx,
+  id_col = "pid",
+  code_col = "icd9code",
+  exposure_col = "exposure",
   outcome_col = "outcome",
-  n_cores = 4,  # 4+ cores recommended
-  batch_size = 100,
+  master_data = master,
+  n_candidates = 200,
+  min_patients = 10,
+  n_cores = 1,  # Use single core for vignette stability
   progress = TRUE  # Enable progress tracking
 )
 ```
@@ -84,25 +94,25 @@ result <- hdps(
 ### Preprocessing Large Datasets
 ```{r memory-optimization}
 # Convert to data.table for better performance
-if (!is.data.table(your_data)) {
-  your_data <- as.data.table(your_data)
+if (!is.data.table(dx)) {
+  dx <- as.data.table(dx)
 }
 
 # Remove unnecessary columns before processing
-essential_cols <- c("patient_id", "diagnosis_code")
-your_data <- your_data[, essential_cols, with = FALSE]
+essential_cols <- c("pid", "icd9code")
+dx <- dx[, essential_cols, with = FALSE]
 
 # Process in chunks for very large datasets
 chunk_size <- 50000
-if (nrow(your_data) > chunk_size) {
+if (nrow(dx) > chunk_size) {
   # Process in chunks
-  chunks <- split(1:nrow(your_data), 
-                  ceiling(seq_along(1:nrow(your_data)) / chunk_size))
+  chunks <- split(1:nrow(dx), 
+                  ceiling(seq_along(1:nrow(dx)) / chunk_size))
   
   results <- lapply(chunks, function(chunk_idx) {
-    chunk_data <- your_data[chunk_idx]
-    hdps(chunk_data, "patient_id", "diagnosis_code", 
-         "treatment", "outcome", n_cores = 2)
+    chunk_data <- dx[chunk_idx]
+    hdps(chunk_data, "pid", "icd9code", 
+         "exposure", "outcome", master_data = master, n_cores = 1)
   })
 }
 ```
@@ -139,17 +149,24 @@ cat("Large batch size:", batch_size_large, "\n")
 
 ### Timing Your Analysis
 ```{r performance-monitoring}
+# Load example data
+data(dx)
+data(master)
+
 # Monitor performance
 start_time <- Sys.time()
 start_memory <- gc()[, 2]
 
 result <- hdps(
-  data = your_data,
-  id_col = "patient_id",
-  code_col = "diagnosis_code",
-  exposure_col = "treatment", 
+  data = dx,
+  id_col = "pid",
+  code_col = "icd9code",
+  exposure_col = "exposure", 
   outcome_col = "outcome",
-  n_cores = 4,
+  master_data = master,
+  n_candidates = 100,
+  min_patients = 5,
+  n_cores = 1,
   progress = TRUE
 )
 
@@ -191,12 +208,15 @@ library(profvis)
 
 profvis({
   result <- hdps(
-    data = your_data,
-    id_col = "patient_id",
-    code_col = "diagnosis_code", 
-    exposure_col = "treatment",
+    data = dx,
+    id_col = "pid",
+    code_col = "icd9code", 
+    exposure_col = "exposure",
     outcome_col = "outcome",
-    n_cores = 2
+    master_data = master,
+    n_candidates = 50,
+    min_patients = 5,
+    n_cores = 1
   )
 })
 ```
@@ -226,13 +246,19 @@ library(hdps)
 library(data.table)
 
 # 1. Data preparation
-data <- as.data.table(your_data)
-data <- data[!is.na(patient_id) & !is.na(diagnosis_code)]
+data(dx)
+data(master)
+dx <- as.data.table(dx)
+dx <- dx[!is.na(pid) & !is.na(icd9code)]
 
 # 2. Determine optimal parameters
-n_patients <- length(unique(data$patient_id))
+n_patients <- length(unique(dx$pid))
 n_cores <- min(parallel::detectCores() - 1, 4)
 batch_size <- ifelse(n_patients > 5000, 100, 50)
+
+# For vignette stability, use single core
+n_cores <- 1
+batch_size <- 50
 
 # 3. Run analysis with monitoring
 start_time <- Sys.time()
@@ -242,12 +268,13 @@ cat("Cores:", n_cores, "\n")
 cat("Batch size:", batch_size, "\n")
 
 result <- hdps(
-  data = data,
-  id_col = "patient_id",
-  code_col = "diagnosis_code",
-  exposure_col = "treatment",
+  data = dx,
+  id_col = "pid",
+  code_col = "icd9code",
+  exposure_col = "exposure",
   outcome_col = "outcome", 
-  n_candidates = 200,
+  master_data = master,
+  n_candidates = 100,
   min_patients = 10,
   n_cores = n_cores,
   batch_size = batch_size,
