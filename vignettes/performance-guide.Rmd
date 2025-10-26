@@ -202,8 +202,9 @@ cat("Processing rate:", round(processing_rate, 0), "covariates/second\n")
    - Ensure sufficient data for progress tracking
 
 ### Performance Profiling
-```{r profiling}
-# Profile your analysis
+```{r profiling, eval=FALSE}
+# Profile your analysis (optional - requires profvis package)
+# install.packages("profvis")  # Uncomment to install
 library(profvis)
 
 profvis({
