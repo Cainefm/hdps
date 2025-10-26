@@ -42,7 +42,7 @@ The `hdps` package implements the High-Dimensional Propensity Score (HDPS) algor
 devtools::install_github("Cainefm/hdps")
 
 # Or install from local .tar.gz file
-install.packages("hdps_0.9.0.tar.gz", repos = NULL, type = "source")
+install.packages("hdps_0.9.4.tar.gz", repos = NULL, type = "source")
 ```
 
 # Basic Usage

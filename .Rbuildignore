@@ -13,3 +13,5 @@ hdps.Rcheck/
 
 # Documentation build files (keep inst/doc for vignettes)
 vignettes/*.R
+^doc$
+^Meta$
