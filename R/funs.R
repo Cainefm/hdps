@@ -39,27 +39,30 @@ identify_candidates <- function(dt, id, code, type, n = 200, min_patients = 10) 
         return(list(candidates = data.table(), data = dt[0], patient_ids = character(0)))
     }
     
-    # Create copy to avoid modifying original data
-    dt <- copy(dt)
+    # Use a minimal copy approach - only copy the necessary columns
+    # This is much more efficient than copying the entire dataset
     
-    # Rename columns once at start
-    setnames(dt, c(id, code), c("pid", "code"))
+    # Create a minimal working dataset with only needed columns
+    work_dt <- dt[, c(id, code), with = FALSE]
+    setnames(work_dt, c(id, code), c("pid", "code"))
     
     # Ensure pid is character for consistent merging
-    dt[, pid := as.character(pid)]
+    work_dt[, pid := as.character(pid)]
     
-    prevalence <- dt[, .(n_patients = uniqueN(pid)), by = code]
-    total_patients <- dt[, uniqueN(pid)]
+    # Calculate prevalence
+    prevalence <- work_dt[, .(n_patients = uniqueN(pid)), by = code]
+    total_patients <- work_dt[, uniqueN(pid)]
     prevalence[, prevalence := (n_patients / total_patients) * 100]
     prevalence[, prevalence_truncated := ifelse(prevalence > 50, 100 - prevalence, prevalence)]
     
     candidates <- prevalence[n_patients >= min_patients][order(prevalence_truncated, decreasing = TRUE)]
     candidates <- candidates[1:min(n, nrow(candidates))]
     
-    result <- dt[code %in% candidates$code]
+    # Filter data and create result with renamed columns
+    result <- work_dt[code %in% candidates$code]
     result[, code := paste0(type, "_", code)]
     
-    list(candidates = candidates, data = result, patient_ids = unique(dt$pid))
+    list(candidates = candidates, data = result, patient_ids = unique(dt[[id]]))
 }
 
 #' Assess recurrence of covariates
@@ -104,21 +107,24 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
         return(data.table(pid = character(0)))
     }
     
-    # Create copy to avoid modifying original data
-    dt <- copy(dt)
+    # Use a minimal copy approach - only copy the necessary columns
+    # This is much more efficient than copying the entire dataset
     
-    # Rename columns once at start
-    setnames(dt, c(id, code), c("pid", "code"))
+    # Create a minimal working dataset with only needed columns
+    work_dt <- dt[, c(id, code), with = FALSE]
+    setnames(work_dt, c(id, code), c("pid", "code"))
     
     # Ensure pid is character for consistent merging
-    dt[, pid := as.character(pid)]
+    work_dt[, pid := as.character(pid)]
     
     # Calculate count cutoff based on rank
     count_cutoff <- if (rank == Inf) Inf else {
-        dt[, .(count = .N), .(pid, code)][order(count, decreasing = TRUE)][rank, count]
+        work_dt[, .(count = .N), .(pid, code)][order(count, decreasing = TRUE)][rank, count]
     }
     
-    counts <- dt[, .(count = .N), .(pid, code)][count <= count_cutoff]
+    # Calculate counts
+    counts <- work_dt[, .(count = .N), .(pid, code)][count <= count_cutoff]
+    
     quantiles <- counts[, .(
         Q1 = quantile(count, 0.25),
         Q2 = quantile(count, 0.5),
@@ -447,29 +453,37 @@ hdps <- function(data, id_col, code_col, exposure_col, outcome_col,
         if (!missing(exposure_col) && !missing(outcome_col)) {
             # Prepare exposure/outcome data
             if (!is.null(master_data)) {
-                # Use provided master data
-                cohort_data <- as.data.table(copy(master_data))
+                # Use provided master data - avoid copy() by using column references
+                cohort_data <- as.data.table(master_data)
                 if (!id_col %in% names(cohort_data)) {
                     stop("Column '", id_col, "' not found in master_data")
                 }
-                if ("pid" %in% names(cohort_data) && id_col != "pid") {
-                    cohort_data[, pid := NULL]
+                
+                # Create new data.table with renamed columns instead of modifying original
+                if (id_col == "pid") {
+                    cohort_data <- cohort_data[, .(pid = get(id_col), 
+                                                 exposure = get(exposure_col), 
+                                                 outcome = get(outcome_col))]
+                } else {
+                    cohort_data <- cohort_data[, .(pid = get(id_col), 
+                                                 exposure = get(exposure_col), 
+                                                 outcome = get(outcome_col))]
                 }
-                setnames(cohort_data, id_col, "pid")
             } else {
                 # Use exposure/outcome from same dataset
-                cohort_data <- as.data.table(data[, c(id_col, exposure_col, outcome_col), with = FALSE])
-                setnames(cohort_data, id_col, "pid")
+                cohort_data <- data[, .(pid = get(id_col), 
+                                      exposure = get(exposure_col), 
+                                      outcome = get(outcome_col))]
             }
             
             # Standardize data types and merge
             cohort_data[, pid := as.character(pid)]
-            cohort_data[, (exposure_col) := as.numeric(get(exposure_col))]
-            cohort_data[, (outcome_col) := as.numeric(get(outcome_col))]
+            cohort_data[, exposure := as.numeric(exposure)]
+            cohort_data[, outcome := as.numeric(outcome)]
             recurrence[, pid := as.character(pid)]
             cohort_data <- merge(recurrence, cohort_data, by = "pid", all.x = TRUE)
             
-            prioritization <- prioritize(cohort_data, "pid", exposure_col, outcome_col, 
+            prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome", 
                                        correction = correction, n_cores = n_cores, 
                                        batch_size = batch_size, progress = progress)
             
