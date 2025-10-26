@@ -5,7 +5,7 @@ Version: 0.9.3
 Author: Min Fan [aut, cre] (<https://orcid.org/0000-0001-9074-633X>), Edmund Chueng [aut]
 Maintainer: Min Fan <minfan@connect.hku.hk>
 Description: Automated covariate selection for observational studies using the High-Dimensional Propensity Score (HDPS) algorithm. Provides modular workflow, parallel processing, interactive visualizations, and comprehensive documentation for epidemiological research.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.5.0), data.table (>= 1.14.0), pbapply (>= 1.4.0)
@@ -15,5 +15,5 @@ Suggests: testthat (>= 3.0.0), knitr (>= 1.20), rmarkdown (>= 2.0),
 VignetteBuilder: knitr
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2025-10-26 08:38:59 UTC; fanmin
-Built: R 4.5.0; ; 2025-10-26 08:39:15 UTC; unix
+Packaged: 2025-10-26 08:43:27 UTC; fanmin
+Built: R 4.5.0; ; 2025-10-26 08:43:38 UTC; unix

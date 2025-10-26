@@ -28,9 +28,7 @@ structure’ in the ‘Writing R Extensions’ manual.
 * checking installed package size ... OK
 * checking package directory ... OK
 * checking ‘build’ directory ... OK
-* checking DESCRIPTION meta-information ... NOTE
-License components which are templates and need '+ file LICENSE':
-  MIT
+* checking DESCRIPTION meta-information ... OK
 * checking top-level files ... OK
 * checking for left-over files ... OK
 * checking index information ... OK
@@ -88,4 +86,4 @@ Please use e.g. ‘inst/extdata’ for non-R data files
 * checking running R code from vignettes ... SKIPPED
 * checking re-building of vignette outputs ... SKIPPED
 * DONE
-Status: 3 WARNINGs, 2 NOTEs
+Status: 3 WARNINGs, 1 NOTE
