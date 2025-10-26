@@ -178,16 +178,11 @@ print(p3)
 ## Interactive Plots
 
 ```{r interactive-plots, eval=FALSE}
-# Create interactive plots
-library(plotly)
+# Note: For interactive analysis, use the hdps_interactive() function
+# which provides a Shiny interface for covariate selection
 
-# Interactive bias distribution
-p1_interactive <- plot_bias_distribution(results$prioritization, top_n = 10, interactive = TRUE)
-p1_interactive
-
-# Interactive strength plot
-p2_interactive <- plot_covariate_strength(results$prioritization, interactive = TRUE)
-p2_interactive
+# Example of interactive analysis:
+# hdps_interactive()
 ```
 
 # Flexible Data Input

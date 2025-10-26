@@ -4,17 +4,15 @@
 \alias{plot_bias_distribution}
 \title{Plot bias distribution for top covariates}
 \usage{
-plot_bias_distribution(hdps_result, top_n = 50, interactive = FALSE)
+plot_bias_distribution(hdps_result, top_n = 50)
 }
 \arguments{
 \item{hdps_result}{Results from prioritize function}
 
 \item{top_n}{Number of top covariates to display}
-
-\item{interactive}{Whether to create interactive plots}
 }
 \value{
-ggplot or plotly object
+ggplot object
 }
 \description{
 Plot bias distribution for top covariates

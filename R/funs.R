@@ -309,10 +309,9 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
 #'
 #' @param hdps_result Results from prioritize function
 #' @param top_n Number of top covariates to display
-#' @param interactive Whether to create interactive plots
-#' @return ggplot or plotly object
+#' @return ggplot object
 #' @export
-plot_bias_distribution <- function(hdps_result, top_n = 50, interactive = FALSE) {
+plot_bias_distribution <- function(hdps_result, top_n = 50) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
         stop("ggplot2 package is required for plotting")
     }
@@ -330,22 +329,16 @@ plot_bias_distribution <- function(hdps_result, top_n = 50, interactive = FALSE)
         ggplot2::theme_minimal() +
         ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8))
     
-    if (interactive && requireNamespace("plotly", quietly = TRUE)) {
-        plotly::ggplotly(p)
-    } else {
-        p
-    }
+    return(p)
 }
 
 #' Plot covariate strength relationships
 #'
 #' @param hdps_result Results from prioritize function
-#' @param interactive Whether to create interactive plots
-#'
-#' @return ggplot or plotly object
+#' @return ggplot object
 #' @export
 #'
-plot_covariate_strength <- function(hdps_result, interactive = FALSE) {
+plot_covariate_strength <- function(hdps_result) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
         stop("ggplot2 package is required for plotting")
     }
@@ -363,22 +356,16 @@ plot_covariate_strength <- function(hdps_result, interactive = FALSE) {
         ) +
         ggplot2::theme_minimal()
     
-    if (interactive && requireNamespace("plotly", quietly = TRUE)) {
-        return(plotly::ggplotly(p))
-    } else {
-        return(p)
-    }
+    return(p)
 }
 
 #' Plot bias vs prevalence
 #'
 #' @param hdps_result Results from prioritize function
-#' @param interactive Whether to create interactive plots
-#'
-#' @return ggplot or plotly object
+#' @return ggplot object
 #' @export
 #'
-plot_bias_vs_prevalence <- function(hdps_result, interactive = FALSE) {
+plot_bias_vs_prevalence <- function(hdps_result) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
         stop("ggplot2 package is required for plotting")
     }
@@ -399,11 +386,7 @@ plot_bias_vs_prevalence <- function(hdps_result, interactive = FALSE) {
         ) +
         ggplot2::theme_minimal()
     
-    if (interactive && requireNamespace("plotly", quietly = TRUE)) {
-        return(plotly::ggplotly(p))
-    } else {
-        return(p)
-    }
+    return(p)
 }
 
 #' Complete HDPS workflow wrapper

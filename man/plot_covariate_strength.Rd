@@ -4,15 +4,13 @@
 \alias{plot_covariate_strength}
 \title{Plot covariate strength relationships}
 \usage{
-plot_covariate_strength(hdps_result, interactive = FALSE)
+plot_covariate_strength(hdps_result)
 }
 \arguments{
 \item{hdps_result}{Results from prioritize function}
-
-\item{interactive}{Whether to create interactive plots}
 }
 \value{
-ggplot or plotly object
+ggplot object
 }
 \description{
 Plot covariate strength relationships

@@ -4,15 +4,13 @@
 \alias{plot_bias_vs_prevalence}
 \title{Plot bias vs prevalence}
 \usage{
-plot_bias_vs_prevalence(hdps_result, interactive = FALSE)
+plot_bias_vs_prevalence(hdps_result)
 }
 \arguments{
 \item{hdps_result}{Results from prioritize function}
-
-\item{interactive}{Whether to create interactive plots}
 }
 \value{
-ggplot or plotly object
+ggplot object
 }
 \description{
 Plot bias vs prevalence
