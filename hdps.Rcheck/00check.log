@@ -6,7 +6,7 @@
     GNU Fortran (GCC) 14.2.0
 * running under: macOS 26.0.1
 * using session charset: UTF-8
-* using options ‘--no-manual --no-vignettes’
+* using option ‘--no-manual’
 * checking for file ‘hdps/DESCRIPTION’ ... OK
 * checking extension type ... Package
 * this is package ‘hdps’ version ‘0.9.3’
@@ -16,12 +16,7 @@
 * checking if this is a source package ... OK
 * checking if there is a namespace ... OK
 * checking for executable files ... OK
-* checking for hidden files and directories ... NOTE
-Found the following hidden files and directories:
-  .lintr
-  .github
-These were most likely included in error. See section ‘Package
-structure’ in the ‘Writing R Extensions’ manual.
+* checking for hidden files and directories ... OK
 * checking for portable file names ... OK
 * checking for sufficient/correct file permissions ... OK
 * checking whether package ‘hdps’ can be installed ... OK
@@ -83,7 +78,6 @@ Please use e.g. ‘inst/extdata’ for non-R data files
 * checking examples ... NONE
 * checking for unstated dependencies in vignettes ... OK
 * checking package vignettes ... OK
-* checking running R code from vignettes ... SKIPPED
-* checking re-building of vignette outputs ... SKIPPED
+* checking re-building of vignette outputs ... OK
 * DONE
-Status: 3 WARNINGs, 1 NOTE
+Status: 3 WARNINGs
