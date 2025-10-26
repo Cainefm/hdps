@@ -2,7 +2,6 @@
 
 export(assess_recurrence)
 export(estBias)
-export(estBiasTable)
 export(hdps)
 export(hdps_input)
 export(hdps_interactive)

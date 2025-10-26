@@ -149,28 +149,6 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
 #' Combines identify_candidates and assess_recurrence for backward compatibility.
 
 
-#' Create 2x2 table for bias estimation
-#'
-#' @param dt Data table with exposure and covariate
-#' @param expo Column name for exposure
-#' @param cova Column name for covariate
-#' @return 2x2 contingency table
-estBiasTable <- function(dt, expo, cova) {
-    # Optimized version - direct column access and pre-allocated result
-    temp <- dt[, .(count = .N), by = c(expo, cova)]
-    setnames(temp, c(expo, cova), c("e", "c"))
-    
-    # Create complete 2x2 table directly
-    result <- data.table(
-        e = rep(c(0, 1), each = 2),
-        c = rep(c(0, 1), 2),
-        count = 0
-    )
-    
-    # Merge and fill missing combinations
-    result[temp, count := i.count, on = c("e", "c")]
-    result
-}
 
 
 
@@ -185,27 +163,32 @@ estBiasTable <- function(dt, expo, cova) {
 estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
     setDT(hdpsCohort)
     
-    # Use .() method for better parallel compatibility
-    e1 <- hdpsCohort[get(expo) == 1, .N]
-    e0 <- hdpsCohort[get(expo) == 0, .N]
-    d1 <- hdpsCohort[get(outc) == 1, .N]
-    d0 <- hdpsCohort[get(outc) == 0, .N]
-    n <- hdpsCohort[, .N]
+    # Pre-calculate totals for efficiency
+    e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
+    e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
+    d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
+    d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
+    n <- nrow(hdpsCohort)
     
-    temp <- estBiasTable(hdpsCohort, expo, cova)
-    c1 <- temp[c == 1, sum(count)]
-    c0 <- n - c1
-    e0c1 <- temp[e == 0 & c == 1, count]
-    e1c1 <- temp[e == 1 & c == 1, count]
-    e0c0 <- temp[e == 0 & c == 0, count]
-    e1c0 <- temp[e == 1 & c == 0, count]
-
-    temp <- estBiasTable(hdpsCohort, outc, cova)
-    d0c1 <- temp[e == 0 & c == 1, count]
-    d1c1 <- temp[e == 1 & c == 1, count]
-    d0c0 <- temp[e == 0 & c == 0, count]
-    d1c0 <- temp[e == 1 & c == 0, count]
+    # Single pass contingency tables using optimized table() function
+    expo_table <- table(hdpsCohort[[expo]], hdpsCohort[[cova]], useNA = "no")
+    outc_table <- table(hdpsCohort[[outc]], hdpsCohort[[cova]], useNA = "no")
     
+    # Vectorized count extraction with safe indexing
+    e0c1 <- ifelse(nrow(expo_table) >= 1 && ncol(expo_table) >= 2, expo_table[1, 2], 0)
+    e1c1 <- ifelse(nrow(expo_table) >= 2 && ncol(expo_table) >= 2, expo_table[2, 2], 0)
+    e0c0 <- ifelse(nrow(expo_table) >= 1 && ncol(expo_table) >= 1, expo_table[1, 1], 0)
+    e1c0 <- ifelse(nrow(expo_table) >= 2 && ncol(expo_table) >= 1, expo_table[2, 1], 0)
+    
+    d0c1 <- ifelse(nrow(outc_table) >= 1 && ncol(outc_table) >= 2, outc_table[1, 2], 0)
+    d1c1 <- ifelse(nrow(outc_table) >= 2 && ncol(outc_table) >= 2, outc_table[2, 2], 0)
+    d0c0 <- ifelse(nrow(outc_table) >= 1 && ncol(outc_table) >= 1, outc_table[1, 1], 0)
+    d1c0 <- ifelse(nrow(outc_table) >= 2 && ncol(outc_table) >= 1, outc_table[2, 1], 0)
+    
+    c1 <- e1c1 + e0c1
+    c0 <- e1c0 + e0c0
+    
+    # Apply correction if needed
     if (correction) {
         if (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0) {
             e0c1 <- e0c1 + 0.1
@@ -220,12 +203,13 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
             d1c0 <- d1c0 + 0.1
         }
     }
-
-    pc1 <- e1c1 / e1
-    pc0 <- ifelse(e0c1 / e0 == 0, 0.1, e0c1 / e0)
-    rrCE <- ifelse(pc1 / pc0 == 0, NA, pc1 / pc0)
+    
+    # Calculate proportions and ratios
+    pc1 <- c1 / n
+    pc0 <- c0 / n
+    rrCE <- ifelse((e1c1 / c1) / (e1c0 / c0) == 0, NA, (e1c1 / c1) / (e1c0 / c0))
     rrCD <- ifelse((d1c1 / c1) / (d1c0 / c0) == 0, NA, (d1c1 / c1) / (d1c0 / c0))
-
+    
     bias <- (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1)
     absLogBias <- abs(log(bias))
     ce_strength <- abs(rrCE - 1)
@@ -272,7 +256,7 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         cl <- parallel::makeCluster(n_cores)
         
         # Export necessary functions and data
-        parallel::clusterExport(cl, c("estBias", "estBiasTable", "stats", "setDT", ".N"), 
+        parallel::clusterExport(cl, c("estBias", "stats", "setDT"), 
                                envir = environment())
         
         # Process in batches for memory efficiency
