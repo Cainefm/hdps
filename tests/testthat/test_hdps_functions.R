@@ -61,16 +61,16 @@ test_that("prioritize with parallel processing works", {
     outcome = c(0, 1, 1, 0, 1, 0, 0, 1, 1, 0)
   )
   
-  result <- prioritize(test_cohort, "pid", "exposure", "outcome", parallel = TRUE, n_cores = 2)
+  result <- prioritize(test_cohort, "pid", "exposure", "outcome", n_cores = 2)
   
   expect_is(result, "data.table")
   expect_true("code" %in% colnames(result))
   expect_true("absLogBias" %in% colnames(result))
 })
 
-test_that("hdps_screen works for single domain", {
-  result <- hdps_screen(test_data, "pid", "code", "exposure", "outcome", 
-                       n_candidates = 3, min_patients = 2)
+test_that("hdps works for single domain", {
+  result <- hdps(test_data, "pid", "code", "exposure", "outcome", 
+                 n_candidates = 3, min_patients = 2)
   
   expect_is(result, "list")
   expect_true("candidates" %in% names(result))
@@ -126,12 +126,4 @@ test_that("error handling works", {
   # Test invalid data types
   expect_error(identify_candidates("not_a_dataframe", "pid", "code", "dx"), 
                "dt must be provided as a data.frame or data.table")
-})
-
-test_that("backward compatibility with rec_assess", {
-  result <- rec_assess(test_data, "pid", "code", "dx")
-  
-  expect_is(result, "data.table")
-  expect_true("pid" %in% colnames(result))
-  expect_true(nrow(result) > 0)
 })

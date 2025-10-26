@@ -8,20 +8,10 @@ Description: Automated covariate selection for observational studies using the H
 License: MIT
 Encoding: UTF-8
 LazyData: true
-Depends:
-    R (>= 3.5.0),
-    data.table (>= 1.14.0),
-    pbapply (>= 1.4.0)
-Imports:
-    parallel,
-    stats,
-    utils
-Suggests: 
-    testthat (>= 3.0.0),
-    knitr (>= 1.20),
-    rmarkdown (>= 2.0),
-    ggplot2 (>= 3.0.0),
-    DT (>= 0.15),
-    shiny (>= 1.6.0)
+Depends: R (>= 3.5.0), data.table (>= 1.14.0), pbapply (>= 1.4.0)
+Imports: parallel, stats, utils
+Suggests: testthat (>= 3.0.0), knitr (>= 1.20), rmarkdown (>= 2.0),
+        ggplot2 (>= 3.0.0), DT (>= 0.15), shiny (>= 1.6.0)
 VignetteBuilder: knitr
 RoxygenNote: 7.3.2
+Built: R 4.5.0; ; 2025-10-26 07:30:54 UTC; unix

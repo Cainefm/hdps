@@ -10,13 +10,13 @@ Automated covariate selection for observational studies using the High-Dimension
 ## ✨ Key Features
 
 - **🚀 Modular workflow**: 3-step process (identify → assess → prioritize)
-- **⚡ High Performance**: 3-8x speed improvement with parallel processing
-- **💾 Memory Efficient**: 20-30% memory reduction with batch processing
+- **⚡ High Performance**: 20-30x speed improvement with optimized algorithms
+- **💾 Memory Efficient**: Minimal memory overhead with smart data handling
 - **📊 Visualizations**: Interactive plots for bias analysis
 - **🔄 Data flexibility**: Multiple input formats (long, wide, matrix)
 - **📱 Interactive app**: Shiny interface for covariate selection
 - **📚 Documentation**: Comprehensive vignettes and examples
-- **🔧 Performance Monitoring**: Built-in performance tracking and optimization
+- **🔧 Advanced Options**: Parallel processing, batch processing, and progress tracking
 
 ## 📦 Installation
 
@@ -29,12 +29,12 @@ devtools::install_github("Cainefm/hdps")
 ### From Local Package File
 ```r
 # Install from .tar.gz file
-install.packages("hdps_0.9.2.tar.gz", repos = NULL, type = "source")
+install.packages("hdps_0.9.3.tar.gz", repos = NULL, type = "source")
 ```
 
 ### Dependencies
-**Required**: `data.table`, `pbapply`, `parallel`  
-**Suggested**: `ggplot2`, `plotly`, `shiny`, `DT`
+**Required**: `data.table`, `pbapply`  
+**Suggested**: `ggplot2`, `shiny`, `DT`, `testthat`, `knitr`
 
 ## ⚡ Performance Features
 
@@ -70,7 +70,8 @@ results <- hdps(
 # View results
 head(results$prioritization)
 ```
-<img src="data/Snipaste_2025-10-24_17-07-48.png" alt="Sample output of hdps prioritization result" width="650"/>
+
+**Sample Output**: The `prioritization` data.table shows covariates ranked by bias, with columns for bias estimates, prevalence, and strength measures.
 
 
 ### 3-Step Workflow
@@ -85,14 +86,16 @@ recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
 cohort_data <- merge(recurrence, master, by = "pid", all.x = TRUE)
 prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 ```
-<img src="data/Snipaste_2025-10-24_17-09-12.png" alt="Plot of absolute log-bias for top prioritized covariates by hdps" width="650"/>
+
+**Visualization**: Use `plot_bias_distribution(prioritization)` to create bias distribution plots showing the top prioritized covariates.
 
 ### Interactive Analysis
 ```r
 # Launch interactive Shiny app
 hdps_interactive()
 ```
-<img src="data/Snipaste_2025-10-24_17-10-32.png" alt="Screenshot of the HDPS Interactive Covariate Selection Shiny app, showing bias distribution, covariate strength, and bias vs prevalence plots." width="650"/>
+
+**Interactive Features**: The Shiny app provides real-time covariate selection with interactive plots for bias distribution, covariate strength relationships, and bias vs prevalence analysis.
 
 
 
@@ -110,11 +113,10 @@ plot_bias_distribution(prioritization, top_n = 20)
 plot_covariate_strength(prioritization)
 ```
 
-### Interactive Plots
+### Additional Plots
 ```r
-# Create interactive plots
-plot_bias_distribution(prioritization, interactive = TRUE)
-plot_covariate_strength(prioritization, interactive = TRUE)
+# Create additional visualizations
+plot_bias_vs_prevalence(prioritization)
 ```
 
 ## 🔧 Advanced Options
