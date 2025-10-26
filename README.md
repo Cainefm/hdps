@@ -1,4 +1,3 @@
-
 # High-dimensional propensity score (HDPS)
 
 [![R-CMD-check](https://github.com/Cainefm/hdps/workflows/R-CMD-check/badge.svg)](https://github.com/Cainefm/hdps/actions)
@@ -16,7 +15,6 @@ Automated covariate selection for observational studies using the High-Dimension
 - **🔄 Data flexibility**: Multiple input formats (long, wide, matrix)
 - **📱 Interactive app**: Shiny interface for covariate selection
 - **📚 Documentation**: Comprehensive vignettes and examples
-- **🔧 Advanced Options**: Parallel processing, batch processing, and progress tracking
 
 ## 📦 Installation
 
@@ -36,17 +34,9 @@ install.packages("hdps_0.9.3.tar.gz", repos = NULL, type = "source")
 **Required**: `data.table`, `pbapply`  
 **Suggested**: `ggplot2`, `shiny`, `DT`, `testthat`, `knitr`
 
-## ⚡ Performance Features
+## 🚀 Quick Start
 
-The package includes performance optimizations:
-
-- **Parallel Processing**: Automatic detection of optimal CPU cores
-- **Batch Processing**: Memory-efficient processing of large datasets
-- **Progress Tracking**: Real-time progress monitoring for long-running operations
-
-## 🚀 Quick Start - Basic Usage
-
-### 1-Step workflow
+### 1-Step Workflow
 ```r
 library(hdps)
 library(data.table)
@@ -64,7 +54,7 @@ results <- hdps(
   outcome_col = "outcome",
   master_data = master,  # Pass master dataset separately
   n_candidates = 200,
-  min_patients = 10
+  min_patients = 10  # Minimum patients required per covariate
 )
 
 # View results
@@ -82,7 +72,6 @@ head(results$prioritization)
 
 The `prioritization` data.table shows covariates ranked by bias, with columns for bias estimates, prevalence, and strength measures.
 
-
 ### 3-Step Workflow
 ```r
 # Step 1: Identify candidate covariates
@@ -96,10 +85,6 @@ cohort_data <- merge(recurrence, master, by = "pid", all.x = TRUE)
 prioritization <- prioritize(cohort_data, "pid", "exposure", "outcome")
 ```
 
-**Visualization**: Use `plot_bias_distribution(prioritization)` to create bias distribution plots showing the top prioritized covariates.
-
-![Bias Distribution Plot](inst/extdata/bias_distribution.png)
-
 ### Interactive Analysis
 ```r
 # Launch interactive Shiny app
@@ -110,9 +95,7 @@ hdps_interactive()
 
 ![Interactive HDPS App](inst/extdata/interactive_app.png)
 
-
-
-## 📊 Enhanced Visualizations
+## 📊 Visualizations
 
 ### Bias Distribution Plot
 ```r
@@ -130,26 +113,13 @@ plot_covariate_strength(prioritization)
 
 ![Covariate Strength](inst/extdata/covariate_strength.png)
 
-### Additional Plots
+### Bias vs Prevalence
 ```r
 # Create additional visualizations
 plot_bias_vs_prevalence(prioritization)
 ```
 
 ![Bias vs Prevalence](inst/extdata/bias_vs_prevalence.png)
-
-## 🔧 Advanced Options
-
-### Parallel Processing
-```r
-# Configure parallel processing
-results <- hdps(data, id_col = "pid", code_col = "icd9code", 
-                exposure_col = "exposure", outcome_col = "outcome",
-                n_cores = 4,           # Use 4 CPU cores
-                batch_size = 100,      # Process 100 covariates per batch
-                progress = TRUE)       # Show progress bar
-```
-
 
 ## 📚 Documentation
 
@@ -163,7 +133,6 @@ results <- hdps(data, id_col = "pid", code_col = "icd9code",
 library(testthat)
 test_package("hdps")
 ```
-
 
 ## 📖 Citation
 
