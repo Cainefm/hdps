@@ -4,6 +4,14 @@
 #' @importFrom utils write.csv
 #' @importFrom pbapply pblapply
 
+# Suppress R CMD check warnings for data.table variables
+utils::globalVariables(c(
+  ".", ".N", "pid", "exposure", "outcome", "count", "Q1", "Q2", "Q3", 
+  "once", "spor", "freq", "value", "code_type", "variable", "n_patients",
+  "prevalence_truncated", "absLogBias", "code", "prevalence", "c1", "c0", 
+  "e1", "e0", "ce_strength", "cd_strength"
+))
+
 #' Identify candidate covariates based on prevalence
 #'
 #' @param dt Data table with patient and covariate information

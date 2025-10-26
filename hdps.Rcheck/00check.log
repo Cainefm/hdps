@@ -48,56 +48,7 @@ License components which are templates and need '+ file LICENSE':
 * checking S3 generic/method consistency ... OK
 * checking replacement functions ... OK
 * checking foreign function calls ... OK
-* checking R code for possible problems ... NOTE
-assess_recurrence: no visible binding for global variable ‘pid’
-assess_recurrence: no visible global function definition for ‘.’
-assess_recurrence: no visible binding for global variable ‘count’
-assess_recurrence: no visible binding for global variable ‘Q2’
-assess_recurrence: no visible binding for global variable ‘Q1’
-assess_recurrence: no visible binding for global variable ‘Q3’
-assess_recurrence: no visible binding for global variable ‘once’
-assess_recurrence: no visible binding for global variable ‘spor’
-assess_recurrence: no visible binding for global variable ‘freq’
-assess_recurrence: no visible binding for global variable ‘value’
-assess_recurrence: no visible binding for global variable ‘code_type’
-assess_recurrence: no visible binding for global variable ‘variable’
-hdps: no visible global function definition for ‘.’
-hdps: no visible binding for global variable ‘pid’
-hdps: no visible binding for global variable ‘exposure’
-hdps: no visible binding for global variable ‘outcome’
-hdps_interactive : server: no visible binding for global variable
-  ‘absLogBias’
-identify_candidates: no visible binding for global variable ‘pid’
-identify_candidates: no visible global function definition for ‘.’
-identify_candidates: no visible binding for global variable
-  ‘n_patients’
-identify_candidates: no visible binding for global variable
-  ‘prevalence_truncated’
-plot_bias_distribution: no visible binding for global variable
-  ‘absLogBias’
-plot_bias_distribution: no visible binding for global variable ‘code’
-plot_bias_vs_prevalence: no visible binding for global variable
-  ‘prevalence’
-plot_bias_vs_prevalence: no visible binding for global variable ‘c1’
-plot_bias_vs_prevalence: no visible binding for global variable ‘c0’
-plot_bias_vs_prevalence: no visible binding for global variable ‘e1’
-plot_bias_vs_prevalence: no visible binding for global variable ‘e0’
-plot_bias_vs_prevalence: no visible binding for global variable
-  ‘absLogBias’
-plot_bias_vs_prevalence: no visible binding for global variable
-  ‘ce_strength’
-plot_bias_vs_prevalence: no visible binding for global variable
-  ‘cd_strength’
-plot_covariate_strength: no visible binding for global variable
-  ‘ce_strength’
-plot_covariate_strength: no visible binding for global variable
-  ‘cd_strength’
-plot_covariate_strength: no visible binding for global variable
-  ‘absLogBias’
-Undefined global functions or variables:
-  . absLogBias c0 c1 cd_strength ce_strength code code_type count e0 e1
-  exposure freq n_patients once outcome pid prevalence
-  prevalence_truncated Q1 Q2 Q3 spor value variable
+* checking R code for possible problems ... OK
 * checking Rd files ... OK
 * checking Rd metadata ... OK
 * checking Rd cross-references ... OK
@@ -139,4 +90,4 @@ Please use e.g. ‘inst/extdata’ for non-R data files
 * checking running R code from vignettes ... SKIPPED
 * checking re-building of vignette outputs ... SKIPPED
 * DONE
-Status: 3 WARNINGs, 4 NOTEs
+Status: 3 WARNINGs, 3 NOTEs
