@@ -4,7 +4,16 @@
 \alias{prioritize}
 \title{Prioritize covariates using bias estimation}
 \usage{
-prioritize(dt, pid, expo, outc, correction = TRUE)
+prioritize(
+  dt,
+  pid,
+  expo,
+  outc,
+  correction = TRUE,
+  n_cores = NULL,
+  batch_size = 50,
+  progress = TRUE
+)
 }
 \arguments{
 \item{dt}{Dataset after recurrence assessment}
@@ -16,6 +25,12 @@ prioritize(dt, pid, expo, outc, correction = TRUE)
 \item{outc}{Column name for outcome}
 
 \item{correction}{Apply 0.1 correction for zero cells}
+
+\item{n_cores}{Number of cores for parallel processing (NULL for auto-detection)}
+
+\item{batch_size}{Batch size for parallel processing}
+
+\item{progress}{Show progress bar}
 }
 \value{
 Data table with bias estimates for all covariates

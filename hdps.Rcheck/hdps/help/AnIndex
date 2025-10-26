@@ -1,8 +1,8 @@
 assess_recurrence	assess_recurrence
 estBias	estBias
+hdps	hdps
 hdps_input	hdps_input
 hdps_interactive	hdps_interactive
-identify_candidates	identify_candidates
 plot_bias_distribution	plot_bias_distribution
 plot_bias_vs_prevalence	plot_bias_vs_prevalence
 plot_covariate_strength	plot_covariate_strength

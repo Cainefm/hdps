@@ -1,10 +1,8 @@
 assess_recurrence       Assess recurrence of covariates
-estBias                 Estimate apparent relative risk bias for a
-                        covariate
+estBias                 Covariate assessment wrapper function
+hdps                    Complete HDPS workflow
 hdps_input              Flexible data input handler
 hdps_interactive        Interactive HDPS Covariate Selection App
-identify_candidates     Identify candidate covariates based on
-                        prevalence
 plot_bias_distribution
                         Plot bias distribution for top covariates
 plot_bias_vs_prevalence

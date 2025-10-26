@@ -45,9 +45,6 @@ License components which are templates and need '+ file LICENSE':
 * checking dependencies in R code ... NOTE
 'library' or 'require' call to ‘data.table’ which was already attached by Depends.
   Please remove these calls from your code.
-Package in Depends field not imported from: ‘pbapply’
-  These packages need to be imported from (in the NAMESPACE file)
-  for when this namespace is loaded but not attached.
 * checking S3 generic/method consistency ... OK
 * checking replacement functions ... OK
 * checking foreign function calls ... OK
@@ -106,22 +103,24 @@ Undefined global functions or variables:
 * checking Rd cross-references ... OK
 * checking for missing documentation entries ... WARNING
 Undocumented code objects:
-  ‘dx’ ‘hdps’ ‘master’
+  ‘dx’ ‘identify_candidates’ ‘master’
 Undocumented data sets:
   ‘dx’ ‘master’
 All user-level objects in a package should have documentation entries.
 See chapter ‘Writing R documentation files’ in the ‘Writing R
 Extensions’ manual.
-* checking for code/documentation mismatches ... WARNING
-Codoc mismatches from Rd file 'prioritize.Rd':
-prioritize
-  Code: function(dt, pid, expo, outc, correction = TRUE, n_cores =
-                 NULL, batch_size = 50, progress = TRUE)
-  Docs: function(dt, pid, expo, outc, correction = TRUE)
-  Argument names in code not in docs:
-    n_cores batch_size progress
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... WARNING
+Undocumented arguments in Rd file 'hdps.Rd'
+  ‘master_data’ ‘batch_size’ ‘progress’
+Documented arguments not in \usage in Rd file 'hdps.Rd':
+  ‘parallel’
 
-* checking Rd \usage sections ... OK
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
 * checking Rd contents ... OK
 * checking for unstated dependencies in examples ... OK
 * checking contents of ‘data’ directory ... WARNING

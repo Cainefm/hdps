@@ -2,7 +2,7 @@
 % Please edit documentation in R/funs.R
 \name{estBias}
 \alias{estBias}
-\title{Estimate apparent relative risk bias for a covariate}
+\title{Covariate assessment wrapper function}
 \usage{
 estBias(hdpsCohort, cova, expo, outc, correction = TRUE)
 }
@@ -21,5 +21,6 @@ estBias(hdpsCohort, cova, expo, outc, correction = TRUE)
 Data table with bias estimates
 }
 \description{
+Combines identify_candidates and assess_recurrence for backward compatibility.
 Estimate apparent relative risk bias for a covariate
 }

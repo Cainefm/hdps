@@ -1,4 +1,9 @@
 
+#' @importFrom data.table ":=" ".N" as.data.table data.table dcast is.data.table melt rbindlist setDT setnames uniqueN
+#' @importFrom stats quantile reorder
+#' @importFrom utils write.csv
+#' @importFrom pbapply pblapply
+
 #' Identify candidate covariates based on prevalence
 #'
 #' @param dt Data table with patient and covariate information
@@ -166,6 +171,7 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
 #' @param outc Column name for outcome
 #' @param correction Apply 0.1 correction for zero cells
 #' @return Data table with bias estimates
+#' @export
 estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
     setDT(hdpsCohort)
     
@@ -235,6 +241,9 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
 #' @param expo Column name for exposure
 #' @param outc Column name for outcome
 #' @param correction Apply 0.1 correction for zero cells
+#' @param n_cores Number of cores for parallel processing (NULL for auto-detection)
+#' @param batch_size Batch size for parallel processing
+#' @param progress Show progress bar
 #' @return Data table with bias estimates for all covariates
 #' @export
 prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL, 
