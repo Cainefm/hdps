@@ -1,0 +1,143 @@
+* using log directory ‘/Users/fanmin/Documents/70-79 Projects/hdps/hdps.Rcheck’
+* using R version 4.5.0 (2025-04-11)
+* using platform: aarch64-apple-darwin20
+* R was compiled by
+    Apple clang version 14.0.0 (clang-1400.0.29.202)
+    GNU Fortran (GCC) 14.2.0
+* running under: macOS 26.0.1
+* using session charset: UTF-8
+* using options ‘--no-manual --no-vignettes’
+* checking for file ‘hdps/DESCRIPTION’ ... OK
+* checking extension type ... Package
+* this is package ‘hdps’ version ‘0.9.3’
+* package encoding: UTF-8
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... NOTE
+Found the following hidden files and directories:
+  .lintr
+  .github
+These were most likely included in error. See section ‘Package
+structure’ in the ‘Writing R Extensions’ manual.
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking whether package ‘hdps’ can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking ‘build’ directory ... OK
+* checking DESCRIPTION meta-information ... NOTE
+License components which are templates and need '+ file LICENSE':
+  MIT
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking dependencies in R code ... NOTE
+'library' or 'require' call to ‘data.table’ which was already attached by Depends.
+  Please remove these calls from your code.
+Package in Depends field not imported from: ‘pbapply’
+  These packages need to be imported from (in the NAMESPACE file)
+  for when this namespace is loaded but not attached.
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+assess_recurrence: no visible binding for global variable ‘pid’
+assess_recurrence: no visible global function definition for ‘.’
+assess_recurrence: no visible binding for global variable ‘count’
+assess_recurrence: no visible binding for global variable ‘Q2’
+assess_recurrence: no visible binding for global variable ‘Q1’
+assess_recurrence: no visible binding for global variable ‘Q3’
+assess_recurrence: no visible binding for global variable ‘once’
+assess_recurrence: no visible binding for global variable ‘spor’
+assess_recurrence: no visible binding for global variable ‘freq’
+assess_recurrence: no visible binding for global variable ‘value’
+assess_recurrence: no visible binding for global variable ‘code_type’
+assess_recurrence: no visible binding for global variable ‘variable’
+hdps: no visible global function definition for ‘.’
+hdps: no visible binding for global variable ‘pid’
+hdps: no visible binding for global variable ‘exposure’
+hdps: no visible binding for global variable ‘outcome’
+hdps_interactive : server: no visible binding for global variable
+  ‘absLogBias’
+identify_candidates: no visible binding for global variable ‘pid’
+identify_candidates: no visible global function definition for ‘.’
+identify_candidates: no visible binding for global variable
+  ‘n_patients’
+identify_candidates: no visible binding for global variable
+  ‘prevalence_truncated’
+plot_bias_distribution: no visible binding for global variable
+  ‘absLogBias’
+plot_bias_distribution: no visible binding for global variable ‘code’
+plot_bias_vs_prevalence: no visible binding for global variable
+  ‘prevalence’
+plot_bias_vs_prevalence: no visible binding for global variable ‘c1’
+plot_bias_vs_prevalence: no visible binding for global variable ‘c0’
+plot_bias_vs_prevalence: no visible binding for global variable ‘e1’
+plot_bias_vs_prevalence: no visible binding for global variable ‘e0’
+plot_bias_vs_prevalence: no visible binding for global variable
+  ‘absLogBias’
+plot_bias_vs_prevalence: no visible binding for global variable
+  ‘ce_strength’
+plot_bias_vs_prevalence: no visible binding for global variable
+  ‘cd_strength’
+plot_covariate_strength: no visible binding for global variable
+  ‘ce_strength’
+plot_covariate_strength: no visible binding for global variable
+  ‘cd_strength’
+plot_covariate_strength: no visible binding for global variable
+  ‘absLogBias’
+Undefined global functions or variables:
+  . absLogBias c0 c1 cd_strength ce_strength code code_type count e0 e1
+  exposure freq n_patients once outcome pid prevalence
+  prevalence_truncated Q1 Q2 Q3 spor value variable
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... WARNING
+Undocumented code objects:
+  ‘dx’ ‘hdps’ ‘master’
+Undocumented data sets:
+  ‘dx’ ‘master’
+All user-level objects in a package should have documentation entries.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
+* checking for code/documentation mismatches ... WARNING
+Codoc mismatches from Rd file 'prioritize.Rd':
+prioritize
+  Code: function(dt, pid, expo, outc, correction = TRUE, n_cores =
+                 NULL, batch_size = 50, progress = TRUE)
+  Docs: function(dt, pid, expo, outc, correction = TRUE)
+  Argument names in code not in docs:
+    n_cores batch_size progress
+
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking contents of ‘data’ directory ... WARNING
+Files not of a type allowed in a ‘data’ directory:
+  ‘dx.Rd’ ‘master.Rd’
+Please use e.g. ‘inst/extdata’ for non-R data files
+
+* checking data for non-ASCII characters ... OK
+* checking LazyData ... OK
+* checking data for ASCII and uncompressed saves ... OK
+* checking installed files from ‘inst/doc’ ... OK
+* checking files in ‘vignettes’ ... OK
+* checking examples ... NONE
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes ... OK
+* checking running R code from vignettes ... SKIPPED
+* checking re-building of vignette outputs ... SKIPPED
+* DONE
+Status: 3 WARNINGs, 4 NOTEs

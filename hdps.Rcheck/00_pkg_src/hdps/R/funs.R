@@ -235,9 +235,6 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
 #' @param expo Column name for exposure
 #' @param outc Column name for outcome
 #' @param correction Apply 0.1 correction for zero cells
-#' @param n_cores Number of cores for parallel processing (NULL for auto-detection)
-#' @param batch_size Batch size for parallel processing
-#' @param progress Show progress bar
 #' @return Data table with bias estimates for all covariates
 #' @export
 prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL, 

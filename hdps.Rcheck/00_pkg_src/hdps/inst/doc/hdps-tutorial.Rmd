@@ -1,0 +1,285 @@
+---
+title: "HDPS Package Tutorial"
+author: "Min Fan, Edmund Chueng"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+vignette: >
+  %\VignetteIndexEntry{HDPS Package Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 8,
+  fig.height = 6
+)
+```
+
+# Introduction
+
+The `hdps` package implements the High-Dimensional Propensity Score (HDPS) algorithm for automated covariate selection in observational studies.
+
+## Key Features
+
+- **Modular workflow**: 3-step process (identify → assess → prioritize)
+- **Performance**: Parallel processing for large datasets
+- **Visualizations**: Interactive plots for bias analysis
+- **Data flexibility**: Multiple input formats
+
+# Installation
+
+```{r installation, eval=FALSE}
+# Install from GitHub
+devtools::install_github("Cainefm/hdps")
+
+# Or install from local .tar.gz file
+install.packages("hdps_0.9.0.tar.gz", repos = NULL, type = "source")
+```
+
+# Basic Usage
+
+## Load the Package
+
+```{r load-package}
+library(hdps)
+library(data.table)
+library(ggplot2)
+```
+
+## Example Dataset
+
+Let's create a sample dataset to demonstrate the package functionality:
+
+```{r create-sample-data}
+# Create sample diagnosis data
+set.seed(123)
+n_patients <- 100
+n_codes <- 50
+
+# Generate patient IDs and diagnosis codes
+dx_data <- data.table(
+  pid = rep(1:n_patients, each = n_codes),
+  code = rep(paste0("ICD", sprintf("%03d", 1:n_codes)), n_patients),
+  type = "dx"
+)
+
+# Add some variation - not all patients have all codes
+dx_data <- dx_data[sample(nrow(dx_data), nrow(dx_data) * 0.3), ]
+
+# Create master table with exposure and outcome
+master_data <- data.table(
+  pid = 1:n_patients,
+  exposure = rbinom(n_patients, 1, 0.5),
+  outcome = rbinom(n_patients, 1, 0.3)
+)
+
+# Merge with exposure/outcome data
+dx_data <- merge(dx_data, master_data, by = "pid", all.x = TRUE)
+
+head(dx_data)
+```
+
+## Complete HDPS Workflow
+
+```{r hdps-complete}
+# Complete HDPS workflow in one function (using single core to avoid vignette issues)
+results <- hdps(
+  data = dx_data,
+  id_col = "pid",
+  code_col = "code", 
+  exposure_col = "exposure",
+  outcome_col = "outcome",
+  master_data = master_data,
+  n_candidates = 20,
+  min_patients = 5,
+  n_cores = 1  # Use single core for vignette
+)
+
+# View results
+head(results$prioritization[order(absLogBias, decreasing = TRUE)])
+```
+
+# Advanced Features
+
+
+## Multi-Domain Analysis
+
+```{r multi-domain, eval=FALSE}
+# Create multi-domain data
+dx_data <- data.table(pid = 1:100, code = paste0("DX", 1:100), type = "dx")
+px_data <- data.table(pid = 1:100, code = paste0("PX", 1:100), type = "px")
+rx_data <- data.table(pid = 1:100, code = paste0("RX", 1:100), type = "rx")
+
+# Multi-domain analysis
+multi_domain_results <- hdps_multi_domain(
+  data_list = list(dx = dx_data, px = px_data, rx = rx_data),
+  id_col = "pid",
+  code_col = "code",
+  exposure_col = "exposure",
+  outcome_col = "outcome"
+)
+```
+
+## Complete Workflow with hdps
+
+```{r complete-workflow}
+# Complete workflow in one function
+results <- hdps(
+  data = dx_data,
+  id_col = "pid",
+  code_col = "code",
+  exposure_col = "exposure",
+  outcome_col = "outcome",
+  master_data = master_data,
+  n_candidates = 20,
+  min_patients = 5,
+  n_cores = 1
+)
+
+# View results
+str(results)
+```
+
+# Visualization
+
+## Bias Distribution Plot
+
+```{r bias-plot}
+# Plot bias distribution
+p1 <- plot_bias_distribution(results$prioritization, top_n = 10)
+print(p1)
+```
+
+## Covariate Strength Relationships
+
+```{r strength-plot}
+# Plot covariate strength relationships
+p2 <- plot_covariate_strength(results$prioritization)
+print(p2)
+```
+
+## Bias vs Prevalence
+
+```{r prevalence-plot}
+# Plot bias vs prevalence
+p3 <- plot_bias_vs_prevalence(results$prioritization)
+print(p3)
+```
+
+## Interactive Plots
+
+```{r interactive-plots, eval=FALSE}
+# Note: For interactive analysis, use the hdps_interactive() function
+# which provides a Shiny interface for covariate selection
+
+# Example of interactive analysis:
+# hdps_interactive()
+```
+
+# Flexible Data Input
+
+## Different Input Formats
+
+```{r flexible-input}
+# Long format (default)
+data_long <- hdps_input(dx_data, format = "long")
+
+# Wide format
+wide_data <- dcast(dx_data, pid ~ code, value.var = "code", fun.aggregate = length)
+data_wide <- hdps_input(wide_data, format = "wide", value_col = "count")
+
+# Matrix format (example)
+# matrix_data <- matrix(rbinom(100, 1, 0.5), nrow = 10, ncol = 10)
+# rownames(matrix_data) <- paste0("P", 1:10)
+# colnames(matrix_data) <- paste0("VAR", 1:10)
+# data_matrix <- hdps_input(matrix_data, format = "matrix")
+```
+
+# Performance Tips
+
+## Large Datasets
+
+For large datasets, consider:
+
+1. **Limit candidates**: Use smaller `n` values in `identify_candidates()`
+2. **Filter data**: Remove rare codes before analysis
+3. **Use data.table**: Ensure your data is in `data.table` format
+
+## Memory Management
+
+```{r memory-tips, eval=FALSE}
+# Monitor memory usage
+library(pryr)
+mem_used()
+
+# Use gc() to free memory
+gc()
+```
+
+# Best Practices
+
+## Data Preparation
+
+1. **Clean your data**: Remove missing values and invalid codes
+2. **Standardize formats**: Ensure consistent column names and data types
+3. **Validate inputs**: Check that required columns exist
+
+## Parameter Selection
+
+1. **n_candidates**: Start with 200-500, adjust based on your data size
+2. **min_patients**: Use 10-50 depending on your sample size
+
+## Quality Control
+
+```{r quality-control}
+# Check data quality
+cat("Number of patients:", length(unique(dx_data$pid)), "\n")
+cat("Number of codes:", length(unique(dx_data$code)), "\n")
+cat("Missing values:", sum(is.na(dx_data)), "\n")
+
+# Check exposure/outcome distribution
+table(master_data$exposure)
+table(master_data$outcome)
+```
+
+# Troubleshooting
+
+## Common Issues
+
+1. **Memory errors**: Reduce `n_candidates` or filter data
+2. **Slow performance**: Use data.table for better performance
+3. **Missing data**: Check for NA values in your dataset
+4. **Column name errors**: Ensure column names match exactly
+
+## Debugging
+
+```{r debugging}
+# Check intermediate results
+candidates <- identify_candidates(dx_data, "pid", "code", "dx", n = 10)
+cat("Number of candidates:", nrow(candidates$candidates), "\n")
+
+# Check recurrence data
+recurrence <- assess_recurrence(candidates$data, "pid", "code", "dx")
+cat("Number of recurrence variables:", ncol(recurrence) - 1, "\n")
+```
+
+# Conclusion
+
+The `hdps` package provides a comprehensive solution for high-dimensional propensity score analysis. Key features include:
+
+- **Modular workflow** for flexible analysis
+- **Domain-specific handling** for different data types
+- **Parallel processing** for large datasets
+- **Enhanced visualizations** for result interpretation
+- **Flexible data input** for various formats
+
+For more information, see the package documentation and examples.
