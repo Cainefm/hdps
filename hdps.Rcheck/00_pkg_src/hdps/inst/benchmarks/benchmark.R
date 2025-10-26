@@ -3,7 +3,6 @@
 # Run with: Rscript inst/benchmarks/benchmark.R
 
 library(hdps)
-library(data.table)
 library(microbenchmark)
 library(ggplot2)
 

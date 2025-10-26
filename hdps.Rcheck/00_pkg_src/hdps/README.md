@@ -39,7 +39,6 @@ install.packages("hdps_0.9.3.tar.gz", repos = NULL, type = "source")
 ### 1-Step Workflow
 ```r
 library(hdps)
-library(data.table)
 
 # Load your data
 data(dx)  # Example diagnosis data

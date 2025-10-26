@@ -2,7 +2,7 @@
 # This script demonstrates how to use the example datasets with the HDPS package
 
 # Load required packages
-library(data.table)
+library(hdps)
 
 # Note: To use the HDPS functions, you would need to:
 # 1. Install the package: devtools::install()

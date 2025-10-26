@@ -8,7 +8,6 @@ knitr::opts_chunk$set(
 
 ## ----small-datasets-----------------------------------------------------------
 library(hdps)
-library(data.table)
 
 # Load example data
 data(dx)
@@ -158,7 +157,6 @@ cat("Processing rate:", round(processing_rate, 0), "covariates/second\n")
 ## ----complete-example---------------------------------------------------------
 # Complete performance-optimized workflow
 library(hdps)
-library(data.table)
 
 # 1. Data preparation
 data(dx)

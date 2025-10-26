@@ -51,7 +51,6 @@ install.packages("hdps_0.9.0.tar.gz", repos = NULL, type = "source")
 
 ```{r load-package}
 library(hdps)
-library(data.table)
 library(ggplot2)
 ```
 

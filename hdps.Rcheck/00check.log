@@ -42,9 +42,7 @@ License components which are templates and need '+ file LICENSE':
 * checking whether the package can be unloaded cleanly ... OK
 * checking whether the namespace can be loaded with stated dependencies ... OK
 * checking whether the namespace can be unloaded cleanly ... OK
-* checking dependencies in R code ... NOTE
-'library' or 'require' call to ‘data.table’ which was already attached by Depends.
-  Please remove these calls from your code.
+* checking dependencies in R code ... OK
 * checking S3 generic/method consistency ... OK
 * checking replacement functions ... OK
 * checking foreign function calls ... OK
@@ -90,4 +88,4 @@ Please use e.g. ‘inst/extdata’ for non-R data files
 * checking running R code from vignettes ... SKIPPED
 * checking re-building of vignette outputs ... SKIPPED
 * DONE
-Status: 3 WARNINGs, 3 NOTEs
+Status: 3 WARNINGs, 2 NOTEs

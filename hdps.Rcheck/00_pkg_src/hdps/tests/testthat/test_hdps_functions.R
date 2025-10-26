@@ -1,6 +1,6 @@
 # Test HDPS functions
 library(testthat)
-library(data.table)
+library(hdps)
 
 # Create test data
 test_data <- data.table(

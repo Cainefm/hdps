@@ -16,7 +16,6 @@ knitr::opts_chunk$set(
 
 ## ----load-package-------------------------------------------------------------
 library(hdps)
-library(data.table)
 library(ggplot2)
 
 ## ----create-sample-data-------------------------------------------------------

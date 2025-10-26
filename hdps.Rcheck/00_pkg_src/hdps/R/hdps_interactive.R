@@ -11,7 +11,7 @@ hdps_interactive <- function() {
     }
   }
   
-  library(data.table)
+  # Load required packages
   
   if (!"data.table" %in% loadedNamespaces()) {
     stop("Failed to load data.table package")

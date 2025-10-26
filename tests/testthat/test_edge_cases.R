@@ -1,6 +1,5 @@
 # Edge case tests for HDPS package
 library(testthat)
-library(data.table)
 library(hdps)
 
 test_that("handles empty datasets gracefully", {

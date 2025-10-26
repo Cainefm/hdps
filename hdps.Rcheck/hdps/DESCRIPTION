@@ -15,5 +15,5 @@ Suggests: testthat (>= 3.0.0), knitr (>= 1.20), rmarkdown (>= 2.0),
 VignetteBuilder: knitr
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2025-10-26 08:34:45 UTC; fanmin
-Built: R 4.5.0; ; 2025-10-26 08:34:52 UTC; unix
+Packaged: 2025-10-26 08:38:59 UTC; fanmin
+Built: R 4.5.0; ; 2025-10-26 08:39:15 UTC; unix

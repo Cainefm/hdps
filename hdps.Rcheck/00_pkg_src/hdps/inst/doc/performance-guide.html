@@ -367,24 +367,23 @@ datasets</li>
 <div id="small-datasets-1000-patients" class="section level3">
 <h3>Small Datasets (&lt; 1,000 patients)</h3>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(hdps)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Load example data</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">data</span>(dx)</span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">data</span>(master)</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co"># For small datasets, use single-core processing</span></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">hdps</span>(</span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  <span class="at">data =</span> dx,</span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">&quot;pid&quot;</span>,</span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>  <span class="at">code_col =</span> <span class="st">&quot;icd9code&quot;</span>,</span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  <span class="at">exposure_col =</span> <span class="st">&quot;exposure&quot;</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  <span class="at">outcome_col =</span> <span class="st">&quot;outcome&quot;</span>,</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>  <span class="at">master_data =</span> master,</span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>  <span class="at">n_candidates =</span> <span class="dv">50</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  <span class="at">min_patients =</span> <span class="dv">5</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  <span class="at">n_cores =</span> <span class="dv">1</span>  <span class="co"># Single core is sufficient</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co"># Load example data</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">data</span>(dx)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">data</span>(master)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co"># For small datasets, use single-core processing</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">hdps</span>(</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  <span class="at">data =</span> dx,</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">&quot;pid&quot;</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  <span class="at">code_col =</span> <span class="st">&quot;icd9code&quot;</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>  <span class="at">exposure_col =</span> <span class="st">&quot;exposure&quot;</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  <span class="at">outcome_col =</span> <span class="st">&quot;outcome&quot;</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  <span class="at">master_data =</span> master,</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>  <span class="at">n_candidates =</span> <span class="dv">50</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>  <span class="at">min_patients =</span> <span class="dv">5</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  <span class="at">n_cores =</span> <span class="dv">1</span>  <span class="co"># Single core is sufficient</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="medium-datasets-1000---10000-patients" class="section level3">
 <h3>Medium Datasets (1,000 - 10,000 patients)</h3>
@@ -511,11 +510,11 @@ datasets</li>
 <span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>processing_rate <span class="ot">&lt;-</span> <span class="fu">nrow</span>(result<span class="sc">$</span>prioritization) <span class="sc">/</span> duration</span>
 <span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a></span>
 <span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Duration:&quot;</span>, <span class="fu">round</span>(duration, <span class="dv">2</span>), <span class="st">&quot;seconds</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; Duration: 0.28 seconds</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; Duration: 0.25 seconds</span></span>
 <span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Memory used:&quot;</span>, <span class="fu">round</span>(memory_used, <span class="dv">1</span>), <span class="st">&quot;MB</span><span class="sc">\n</span><span class="st">&quot;</span>) </span>
 <span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="co">#&gt; Memory used: -0.1 -4.4 MB</span></span>
 <span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Processing rate:&quot;</span>, <span class="fu">round</span>(processing_rate, <span class="dv">0</span>), <span class="st">&quot;covariates/second</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="co">#&gt; Processing rate: 447 covariates/second</span></span></code></pre></div>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="co">#&gt; Processing rate: 500 covariates/second</span></span></code></pre></div>
 </div>
 </div>
 <div id="troubleshooting-performance-issues" class="section level2">
@@ -590,57 +589,56 @@ datasets</li>
 <h2>Example: Complete Performance-Optimized Workflow</h2>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Complete performance-optimized workflow</span></span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">library</span>(hdps)</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co"># 1. Data preparation</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">data</span>(dx)</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">data</span>(master)</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>dx <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(dx)</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>dx <span class="ot">&lt;-</span> dx[<span class="sc">!</span><span class="fu">is.na</span>(pid) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(icd9code)]</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co"># 2. Determine optimal parameters</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>n_patients <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(dx<span class="sc">$</span>pid))</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>n_cores <span class="ot">&lt;-</span> <span class="fu">min</span>(parallel<span class="sc">::</span><span class="fu">detectCores</span>() <span class="sc">-</span> <span class="dv">1</span>, <span class="dv">4</span>)</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>batch_size <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(n_patients <span class="sc">&gt;</span> <span class="dv">5000</span>, <span class="dv">100</span>, <span class="dv">50</span>)</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="co"># For vignette stability, use single core</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>n_cores <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>batch_size <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a></span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co"># 3. Run analysis with monitoring</span></span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Starting HDPS analysis...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt; Starting HDPS analysis...</span></span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Patients:&quot;</span>, n_patients, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt; Patients: 1000</span></span>
-<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Cores:&quot;</span>, n_cores, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="co">#&gt; Cores: 1</span></span>
-<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Batch size:&quot;</span>, batch_size, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co">#&gt; Batch size: 50</span></span>
-<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a></span>
-<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">hdps</span>(</span>
-<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>  <span class="at">data =</span> dx,</span>
-<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">&quot;pid&quot;</span>,</span>
-<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>  <span class="at">code_col =</span> <span class="st">&quot;icd9code&quot;</span>,</span>
-<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a>  <span class="at">exposure_col =</span> <span class="st">&quot;exposure&quot;</span>,</span>
-<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>  <span class="at">outcome_col =</span> <span class="st">&quot;outcome&quot;</span>, </span>
-<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a>  <span class="at">master_data =</span> master,</span>
-<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a>  <span class="at">n_candidates =</span> <span class="dv">100</span>,</span>
-<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a>  <span class="at">min_patients =</span> <span class="dv">10</span>,</span>
-<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a>  <span class="at">n_cores =</span> n_cores,</span>
-<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a>  <span class="at">batch_size =</span> batch_size,</span>
-<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a>  <span class="at">progress =</span> <span class="cn">TRUE</span></span>
-<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a>)</span>
-<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a></span>
-<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a>duration <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(end_time, start_time, <span class="at">units =</span> <span class="st">&quot;secs&quot;</span>))</span>
-<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a></span>
-<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Analysis completed in&quot;</span>, <span class="fu">round</span>(duration, <span class="dv">2</span>), <span class="st">&quot;seconds</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a><span class="co">#&gt; Analysis completed in 0.2 seconds</span></span>
-<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Candidates found:&quot;</span>, <span class="fu">nrow</span>(result<span class="sc">$</span>candidates), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a><span class="co">#&gt; Candidates found:</span></span>
-<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Covariates prioritized:&quot;</span>, <span class="fu">nrow</span>(result<span class="sc">$</span>prioritization), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a><span class="co">#&gt; Covariates prioritized: 126</span></span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># 1. Data preparation</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="fu">data</span>(dx)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">data</span>(master)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>dx <span class="ot">&lt;-</span> <span class="fu">as.data.table</span>(dx)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>dx <span class="ot">&lt;-</span> dx[<span class="sc">!</span><span class="fu">is.na</span>(pid) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(icd9code)]</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co"># 2. Determine optimal parameters</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>n_patients <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(dx<span class="sc">$</span>pid))</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>n_cores <span class="ot">&lt;-</span> <span class="fu">min</span>(parallel<span class="sc">::</span><span class="fu">detectCores</span>() <span class="sc">-</span> <span class="dv">1</span>, <span class="dv">4</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>batch_size <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(n_patients <span class="sc">&gt;</span> <span class="dv">5000</span>, <span class="dv">100</span>, <span class="dv">50</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co"># For vignette stability, use single core</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>n_cores <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>batch_size <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co"># 3. Run analysis with monitoring</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Starting HDPS analysis...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt; Starting HDPS analysis...</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Patients:&quot;</span>, n_patients, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co">#&gt; Patients: 1000</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Cores:&quot;</span>, n_cores, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="co">#&gt; Cores: 1</span></span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Batch size:&quot;</span>, batch_size, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt; Batch size: 50</span></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">hdps</span>(</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>  <span class="at">data =</span> dx,</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>  <span class="at">id_col =</span> <span class="st">&quot;pid&quot;</span>,</span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>  <span class="at">code_col =</span> <span class="st">&quot;icd9code&quot;</span>,</span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>  <span class="at">exposure_col =</span> <span class="st">&quot;exposure&quot;</span>,</span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a>  <span class="at">outcome_col =</span> <span class="st">&quot;outcome&quot;</span>, </span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>  <span class="at">master_data =</span> master,</span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a>  <span class="at">n_candidates =</span> <span class="dv">100</span>,</span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a>  <span class="at">min_patients =</span> <span class="dv">10</span>,</span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a>  <span class="at">n_cores =</span> n_cores,</span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a>  <span class="at">batch_size =</span> batch_size,</span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a>  <span class="at">progress =</span> <span class="cn">TRUE</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a>)</span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a></span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a>duration <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(end_time, start_time, <span class="at">units =</span> <span class="st">&quot;secs&quot;</span>))</span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a></span>
+<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Analysis completed in&quot;</span>, <span class="fu">round</span>(duration, <span class="dv">2</span>), <span class="st">&quot;seconds</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a><span class="co">#&gt; Analysis completed in 0.21 seconds</span></span>
+<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Candidates found:&quot;</span>, <span class="fu">nrow</span>(result<span class="sc">$</span>candidates), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a><span class="co">#&gt; Candidates found:</span></span>
+<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Covariates prioritized:&quot;</span>, <span class="fu">nrow</span>(result<span class="sc">$</span>prioritization), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a><span class="co">#&gt; Covariates prioritized: 126</span></span></code></pre></div>
 <p>This performance guide should help you optimize HDPS for your
 specific use case and computing environment.</p>
 </div>

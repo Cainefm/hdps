@@ -36,7 +36,6 @@ The HDPS package is optimized for high-performance processing with the following
 ### Small Datasets (< 1,000 patients)
 ```{r small-datasets}
 library(hdps)
-library(data.table)
 
 # Load example data
 data(dx)
@@ -244,7 +243,6 @@ profvis({
 ```{r complete-example}
 # Complete performance-optimized workflow
 library(hdps)
-library(data.table)
 
 # 1. Data preparation
 data(dx)

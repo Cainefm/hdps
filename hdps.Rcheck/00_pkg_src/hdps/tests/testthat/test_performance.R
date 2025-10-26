@@ -1,6 +1,5 @@
 # Performance tests for HDPS package
 library(testthat)
-library(data.table)
 library(hdps)
 
 # Create larger test dataset for performance testing
