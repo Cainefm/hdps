@@ -36,26 +36,13 @@ install.packages("hdps_0.9.2.tar.gz", repos = NULL, type = "source")
 **Required**: `data.table`, `pbapply`, `parallel`  
 **Suggested**: `ggplot2`, `plotly`, `shiny`, `DT`
 
-## ⚡ Performance Optimizations
+## ⚡ Performance Features
 
-The package includes comprehensive performance optimizations:
+The package includes performance optimizations:
 
 - **Parallel Processing**: Automatic detection of optimal CPU cores
 - **Batch Processing**: Memory-efficient processing of large datasets
-- **Vectorized Calculations**: Optimized bias estimation algorithms
-- **Memory Management**: Automatic garbage collection and memory optimization
 - **Progress Tracking**: Real-time progress monitoring for long-running operations
-
-### Performance Benchmarks
-```r
-# Run performance tests
-source("performance_test.R")
-
-# Expected improvements:
-# - 3-8x speed improvement
-# - 20-30% memory reduction
-# - Linear scaling with CPU cores
-```
 
 ## 🚀 Quick Start - Basic Usage
 
@@ -130,18 +117,9 @@ plot_bias_distribution(prioritization, interactive = TRUE)
 plot_covariate_strength(prioritization, interactive = TRUE)
 ```
 
-## 🔧 Performance Monitoring
+## 🔧 Advanced Options
 
-### Monitor Performance
-```r
-# Monitor performance during analysis
-start_metrics <- monitor_performance(data, "HDPS Analysis")
-results <- hdps(data, id_col = "pid", code_col = "icd9code", 
-                exposure_col = "exposure", outcome_col = "outcome")
-performance_summary <- complete_performance(start_metrics)
-```
-
-### Advanced Performance Options
+### Parallel Processing
 ```r
 # Configure parallel processing
 results <- hdps(data, id_col = "pid", code_col = "icd9code", 

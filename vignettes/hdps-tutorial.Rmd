@@ -88,54 +88,24 @@ dx_data <- merge(dx_data, master_data, by = "pid", all.x = TRUE)
 head(dx_data)
 ```
 
-## Step 1: Identify Candidate Covariates
+## Complete HDPS Workflow
 
-```{r identify-candidates}
-# Identify candidate covariates
-candidates <- identify_candidates(
-  dx_data, 
-  id = "pid", 
-  code = "code", 
-  type = "dx",
-  n = 20,  # Maximum 20 candidates
-  min_patients = 5  # Minimum 5 patients per code
+```{r hdps-complete}
+# Complete HDPS workflow in one function (using single core to avoid vignette issues)
+results <- hdps(
+  data = dx_data,
+  id_col = "pid",
+  code_col = "code", 
+  exposure_col = "exposure",
+  outcome_col = "outcome",
+  master_data = master_data,
+  n_candidates = 20,
+  min_patients = 5,
+  n_cores = 1  # Use single core for vignette
 )
 
-# View candidates
-head(candidates$candidates)
-```
-
-## Step 2: Assess Recurrence
-
-```{r assess-recurrence}
-# Assess recurrence patterns
-recurrence <- assess_recurrence(
-  candidates$data, 
-  id = "pid", 
-  code = "code", 
-  type = "dx"
-)
-
-# View recurrence data
-head(recurrence)
-```
-
-## Step 3: Prioritize Covariates
-
-```{r prioritize}
-# Merge with exposure/outcome data
-cohort_data <- merge(recurrence, master_data, by = "pid", all.x = TRUE)
-
-# Prioritize covariates
-prioritization <- prioritize(
-  cohort_data, 
-  pid = "pid", 
-  expo = "exposure", 
-  outc = "outcome"
-)
-
-# View top covariates
-head(prioritization[order(absLogBias, decreasing = TRUE)])
+# View results
+head(results$prioritization[order(absLogBias, decreasing = TRUE)])
 ```
 
 # Advanced Features
@@ -159,18 +129,20 @@ multi_domain_results <- hdps_multi_domain(
 )
 ```
 
-## Complete Workflow with hdps_screen
+## Complete Workflow with hdps
 
 ```{r complete-workflow}
 # Complete workflow in one function
-results <- hdps_screen(
+results <- hdps(
   data = dx_data,
   id_col = "pid",
   code_col = "code",
   exposure_col = "exposure",
   outcome_col = "outcome",
+  master_data = master_data,
   n_candidates = 20,
-  min_patients = 5
+  min_patients = 5,
+  n_cores = 1
 )
 
 # View results
@@ -183,7 +155,7 @@ str(results)
 
 ```{r bias-plot}
 # Plot bias distribution
-p1 <- plot_bias_distribution(prioritization, top_n = 10)
+p1 <- plot_bias_distribution(results$prioritization, top_n = 10)
 print(p1)
 ```
 
@@ -191,7 +163,7 @@ print(p1)
 
 ```{r strength-plot}
 # Plot covariate strength relationships
-p2 <- plot_covariate_strength(prioritization)
+p2 <- plot_covariate_strength(results$prioritization)
 print(p2)
 ```
 
@@ -199,7 +171,7 @@ print(p2)
 
 ```{r prevalence-plot}
 # Plot bias vs prevalence
-p3 <- plot_bias_vs_prevalence(prioritization)
+p3 <- plot_bias_vs_prevalence(results$prioritization)
 print(p3)
 ```
 
@@ -210,11 +182,11 @@ print(p3)
 library(plotly)
 
 # Interactive bias distribution
-p1_interactive <- plot_bias_distribution(prioritization, top_n = 10, interactive = TRUE)
+p1_interactive <- plot_bias_distribution(results$prioritization, top_n = 10, interactive = TRUE)
 p1_interactive
 
 # Interactive strength plot
-p2_interactive <- plot_covariate_strength(prioritization, interactive = TRUE)
+p2_interactive <- plot_covariate_strength(results$prioritization, interactive = TRUE)
 p2_interactive
 ```
 
