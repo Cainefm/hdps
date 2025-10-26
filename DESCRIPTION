@@ -2,8 +2,14 @@ Package: hdps
 Type: Package
 Title: High-Dimensional Propensity Score Analysis
 Version: 0.9.3
-Author: Min Fan [aut, cre] (<https://orcid.org/0000-0001-9074-633X>), Edmund Chueng [aut]
-Maintainer: Min Fan <minfan@connect.hku.hk>
+Authors@R: c(person(given = "Min",
+                    family = "Fan",
+                    role = c("aut", "cre"),
+                    email = "minfan@connect.hku.hk",
+                    comment = c(ORCID = "0000-0001-9074-633X")),
+             person(given = "Edmund",
+                    family = "Chueng",
+                    role = "aut"))
 Description: Automated covariate selection for observational studies using the High-Dimensional Propensity Score (HDPS) algorithm. Provides modular workflow, parallel processing, interactive visualizations, and comprehensive documentation for epidemiological research.
 License: MIT + file LICENSE
 Encoding: UTF-8
