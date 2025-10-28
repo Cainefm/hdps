@@ -4,7 +4,96 @@
 #' @importFrom utils write.csv
 #' @importFrom pbapply pblapply
 
-# Suppress R CMD check warnings for data.table variables
+# Highly optimized R version of estBias using vectorized operations
+estBias_optimized <- function(hdpsCohort, cova, expo, outc, correction = TRUE, common_stats = NULL) {
+    setDT(hdpsCohort)
+    
+    # Use pre-calculated stats if provided, otherwise calculate them
+    if (!is.null(common_stats)) {
+        e1 <- common_stats$e1
+        e0 <- common_stats$e0
+        d1 <- common_stats$d1
+        d0 <- common_stats$d0
+        n <- common_stats$n
+    } else {
+        e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
+        e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
+        d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
+        d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
+        n <- nrow(hdpsCohort)
+    }
+    
+    # Extract vectors once for efficiency
+    covariate_vec <- hdpsCohort[[cova]]
+    exposure_vec <- hdpsCohort[[expo]]
+    outcome_vec <- hdpsCohort[[outc]]
+    
+    # Single pass vectorized contingency table calculation
+    e1c1 <- sum(exposure_vec == 1 & covariate_vec == 1, na.rm = TRUE)
+    e0c1 <- sum(exposure_vec == 0 & covariate_vec == 1, na.rm = TRUE)
+    e1c0 <- sum(exposure_vec == 1 & covariate_vec == 0, na.rm = TRUE)
+    e0c0 <- sum(exposure_vec == 0 & covariate_vec == 0, na.rm = TRUE)
+    
+    d1c1 <- sum(outcome_vec == 1 & covariate_vec == 1, na.rm = TRUE)
+    d0c1 <- sum(outcome_vec == 0 & covariate_vec == 1, na.rm = TRUE)
+    d1c0 <- sum(outcome_vec == 1 & covariate_vec == 0, na.rm = TRUE)
+    d0c0 <- sum(outcome_vec == 0 & covariate_vec == 0, na.rm = TRUE)
+    
+    c1 <- e1c1 + e0c1
+    c0 <- e1c0 + e0c0
+    
+    # Apply correction if needed
+    if (correction) {
+        zero_expo <- (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0)
+        zero_outc <- (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0)
+        
+        if (zero_expo) {
+            e0c1 <- e0c1 + 0.1
+            e1c1 <- e1c1 + 0.1
+            e0c0 <- e0c0 + 0.1
+            e1c0 <- e1c0 + 0.1
+        }
+        if (zero_outc) {
+            d0c1 <- d0c1 + 0.1
+            d1c1 <- d1c1 + 0.1
+            d0c0 <- d0c0 + 0.1
+            d1c0 <- d1c0 + 0.1
+        }
+    }
+    
+    # Recalculate totals after correction
+    c1 <- e1c1 + e0c1
+    c0 <- e1c0 + e0c0
+    
+    # Calculate proportions and ratios
+    pc1 <- c1 / n
+    pc0 <- c0 / n
+    
+    # Avoid division by zero
+    rrCE <- ifelse(c1 > 0 & c0 > 0, (e1c1 / c1) / (e1c0 / c0), NA_real_)
+    rrCD <- ifelse(c1 > 0 & c0 > 0, (d1c1 / c1) / (d1c0 / c0), NA_real_)
+    
+    # Calculate bias and related metrics
+    bias <- ifelse(!is.na(rrCD), (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1), NA_real_)
+    absLogBias <- ifelse(!is.na(bias) & bias > 0, abs(log(bias)), NA_real_)
+    ce_strength <- ifelse(!is.na(rrCE), abs(rrCE - 1), NA_real_)
+    cd_strength <- ifelse(!is.na(rrCD), abs(rrCD - 1), NA_real_)
+    
+    # Return results as data.table
+    data.table(
+        code = cova,
+        e1 = e1, e0 = e0, d1 = d1, d0 = d0,
+        c1 = c1, c0 = c0,
+        e1c1 = e1c1, e0c1 = e0c1, e1c0 = e1c0, e0c0 = e0c0,
+        d1c1 = d1c1, d0c1 = d0c1, d1c0 = d1c0, d0c0 = d0c0,
+        pc1 = pc1, pc0 = pc0,
+        rrCE = rrCE, rrCD = rrCD,
+        bias = bias, absLogBias = absLogBias,
+        ce_strength = ce_strength, cd_strength = cd_strength
+    )
+}
+
+
 utils::globalVariables(c(
   ".", ".N", "pid", "exposure", "outcome", "count", "Q1", "Q2", "Q3", 
   "once", "spor", "freq", "value", "code_type", "variable", "n_patients",
@@ -303,7 +392,7 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         cl <- parallel::makeCluster(n_cores, type = "PSOCK")
         
         # Export necessary functions and data (minimal set)
-        parallel::clusterExport(cl, c("estBias"), envir = environment())
+        parallel::clusterExport(cl, c("estBias_optimized"), envir = environment())
         parallel::clusterExport(cl, c("common_stats"), envir = environment())
         parallel::clusterExport(cl, "dt", envir = environment())
         
@@ -311,12 +400,12 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         if (progress && requireNamespace("pbapply", quietly = TRUE)) {
             # Use pbapply with cluster for progress bar + parallel processing
             batch_results <- pbapply::pblapply(cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction, common_stats)
+                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
             }, cl = cl)
         } else {
             # Use parLapply for true parallel processing without progress bar
             batch_results <- parallel::parLapply(cl, cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction, common_stats)
+                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
             })
         }
         
@@ -331,14 +420,14 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         if (progress && length(cova) > 5) {
             # Use progress bar for sequential execution
             batch_results <- pbapply::pblapply(cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction, common_stats)
+                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
             }, cl = NULL)
             
             return(rbindlist(batch_results))
         } else {
             # Use individual estBias function for better performance
             batch_results <- lapply(cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction, common_stats)
+                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
             })
             
             return(rbindlist(batch_results))
