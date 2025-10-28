@@ -72,7 +72,7 @@ estBiasMatrix <- function(hdpsCohort, cova_list, expo, outc, correction = TRUE) 
     cd_strength <- ifelse(!is.na(rrCD), abs(rrCD - 1), NA_real_)
     
     # Create result data.table with all covariates at once
-    data.table(
+    result <- data.table(
         code = cova_list,
         e1 = rep(e1, length(cova_list)),
         e0 = rep(e0, length(cova_list)),
@@ -82,6 +82,8 @@ estBiasMatrix <- function(hdpsCohort, cova_list, expo, outc, correction = TRUE) 
         e1c1, e0c1, e1c0, e0c0, d1c1, d0c1, d1c0, d0c0,
         pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
     )
+    
+    result
 }
 
 # Suppress R CMD check warnings for data.table variables
@@ -402,7 +404,7 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
             }, cl = NULL)
             
             # Combine all batch results
-            rbindlist(batch_results)
+            return(rbindlist(batch_results))
         } else {
             # Standard processing without progress bar
             batch_results <- lapply(seq_len(n_batches), function(i) {
@@ -415,7 +417,7 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
             })
             
             # Combine all batch results
-            rbindlist(batch_results)
+            return(rbindlist(batch_results))
         }
         
         parallel::stopCluster(cl)
@@ -434,10 +436,10 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
                 estBiasMatrix(dt, batch_cova, expo, outc, correction)
             }, cl = NULL)
             
-            rbindlist(batch_results)
+            return(rbindlist(batch_results))
         } else {
             # Use optimized batch function for better performance
-            estBiasBatch(dt, cova, expo, outc, correction)
+            return(estBiasMatrix(dt, cova, expo, outc, correction))
         }
     }
 }
