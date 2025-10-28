@@ -180,15 +180,24 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
 #' @param correction Apply 0.1 correction for zero cells
 #' @return Data table with bias estimates
 #' @export
-estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
+estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE, common_stats = NULL) {
     setDT(hdpsCohort)
     
-    # Pre-calculate totals for efficiency (vectorized)
-    e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
-    e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
-    d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
-    d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
-    n <- nrow(hdpsCohort)
+    # Use pre-calculated stats if provided, otherwise calculate them
+    if (!is.null(common_stats)) {
+        e1 <- common_stats$e1
+        e0 <- common_stats$e0
+        d1 <- common_stats$d1
+        d0 <- common_stats$d0
+        n <- common_stats$n
+    } else {
+        # Pre-calculate totals for efficiency (vectorized)
+        e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
+        e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
+        d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
+        d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
+        n <- nrow(hdpsCohort)
+    }
     
     # OPTIMIZED: Use data.table aggregation instead of table() - much faster
     # Single pass to get all contingency table counts
@@ -279,8 +288,8 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         n_cores <- max(1, n_cores)  # At least 1 core
     }
     
-    # Pre-calculate common statistics once
-    stats <- list(
+    # Pre-calculate common statistics once to avoid repeated calculations
+    common_stats <- list(
         e1 = sum(dt[[expo]] == 1, na.rm = TRUE),
         e0 = sum(dt[[expo]] == 0, na.rm = TRUE),
         d1 = sum(dt[[outc]] == 1, na.rm = TRUE),
@@ -288,61 +297,48 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         n = nrow(dt)
     )
     
-    # OPTIMIZED: Use parallel processing for large datasets
+    # OPTIMIZED: Use true parallel processing with parLapply for large datasets
     if (n_cores > 1 && length(cova) > 10) {
         # Set up parallel cluster with optimized settings
         cl <- parallel::makeCluster(n_cores, type = "PSOCK")
         
         # Export necessary functions and data (minimal set)
         parallel::clusterExport(cl, c("estBias"), envir = environment())
+        parallel::clusterExport(cl, c("common_stats"), envir = environment())
+        parallel::clusterExport(cl, "dt", envir = environment())
         
-        # Pre-calculate common statistics once to avoid recalculation
-        stats <- list(
-            e1 = sum(dt[[expo]] == 1, na.rm = TRUE),
-            e0 = sum(dt[[expo]] == 0, na.rm = TRUE),
-            d1 = sum(dt[[outc]] == 1, na.rm = TRUE),
-            d0 = sum(dt[[outc]] == 0, na.rm = TRUE),
-            n = nrow(dt)
-        )
-        parallel::clusterExport(cl, "stats", envir = environment())
-        
-        # Process in optimized batches for memory efficiency
-        results <- list()
-        n_batches <- ceiling(length(cova) / batch_size)
-        
-        # OPTIMIZED: Use parallel processing for large datasets
+        # Use parLapply for true parallel processing
         if (progress && requireNamespace("pbapply", quietly = TRUE)) {
+            # Use pbapply with cluster for progress bar + parallel processing
             batch_results <- pbapply::pblapply(cova, function(cova_name) {
                 estBias(dt, cova_name, expo, outc, correction)
             }, cl = cl)
-            
-            # Combine all results
-            return(rbindlist(batch_results))
         } else {
-            # Standard processing without progress bar
-            batch_results <- lapply(cova, function(cova_name) {
+            # Use parLapply for true parallel processing without progress bar
+            batch_results <- parallel::parLapply(cl, cova, function(cova_name) {
                 estBias(dt, cova_name, expo, outc, correction)
             })
-            
-            # Combine all results
-            return(rbindlist(batch_results))
         }
         
+        # Clean up cluster
         parallel::stopCluster(cl)
+        
+        # Combine all results
+        return(rbindlist(batch_results))
         
     } else {
         # OPTIMIZED: Sequential processing for small datasets or single core
         if (progress && length(cova) > 5) {
             # Use progress bar for sequential execution
             batch_results <- pbapply::pblapply(cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction)
+                estBias(dt, cova_name, expo, outc, correction, common_stats)
             }, cl = NULL)
             
             return(rbindlist(batch_results))
         } else {
             # Use individual estBias function for better performance
             batch_results <- lapply(cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction)
+                estBias(dt, cova_name, expo, outc, correction, common_stats)
             })
             
             return(rbindlist(batch_results))
