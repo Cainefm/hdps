@@ -4,96 +4,7 @@
 #' @importFrom utils write.csv
 #' @importFrom pbapply pblapply
 
-# Highly optimized R version of estBias using vectorized operations
-estBias_optimized <- function(hdpsCohort, cova, expo, outc, correction = TRUE, common_stats = NULL) {
-    setDT(hdpsCohort)
-    
-    # Use pre-calculated stats if provided, otherwise calculate them
-    if (!is.null(common_stats)) {
-        e1 <- common_stats$e1
-        e0 <- common_stats$e0
-        d1 <- common_stats$d1
-        d0 <- common_stats$d0
-        n <- common_stats$n
-    } else {
-        e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
-        e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
-        d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
-        d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
-        n <- nrow(hdpsCohort)
-    }
-    
-    # Extract vectors once for efficiency
-    covariate_vec <- hdpsCohort[[cova]]
-    exposure_vec <- hdpsCohort[[expo]]
-    outcome_vec <- hdpsCohort[[outc]]
-    
-    # Single pass vectorized contingency table calculation
-    e1c1 <- sum(exposure_vec == 1 & covariate_vec == 1, na.rm = TRUE)
-    e0c1 <- sum(exposure_vec == 0 & covariate_vec == 1, na.rm = TRUE)
-    e1c0 <- sum(exposure_vec == 1 & covariate_vec == 0, na.rm = TRUE)
-    e0c0 <- sum(exposure_vec == 0 & covariate_vec == 0, na.rm = TRUE)
-    
-    d1c1 <- sum(outcome_vec == 1 & covariate_vec == 1, na.rm = TRUE)
-    d0c1 <- sum(outcome_vec == 0 & covariate_vec == 1, na.rm = TRUE)
-    d1c0 <- sum(outcome_vec == 1 & covariate_vec == 0, na.rm = TRUE)
-    d0c0 <- sum(outcome_vec == 0 & covariate_vec == 0, na.rm = TRUE)
-    
-    c1 <- e1c1 + e0c1
-    c0 <- e1c0 + e0c0
-    
-    # Apply correction if needed
-    if (correction) {
-        zero_expo <- (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0)
-        zero_outc <- (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0)
-        
-        if (zero_expo) {
-            e0c1 <- e0c1 + 0.1
-            e1c1 <- e1c1 + 0.1
-            e0c0 <- e0c0 + 0.1
-            e1c0 <- e1c0 + 0.1
-        }
-        if (zero_outc) {
-            d0c1 <- d0c1 + 0.1
-            d1c1 <- d1c1 + 0.1
-            d0c0 <- d0c0 + 0.1
-            d1c0 <- d1c0 + 0.1
-        }
-    }
-    
-    # Recalculate totals after correction
-    c1 <- e1c1 + e0c1
-    c0 <- e1c0 + e0c0
-    
-    # Calculate proportions and ratios
-    pc1 <- c1 / n
-    pc0 <- c0 / n
-    
-    # Avoid division by zero
-    rrCE <- ifelse(c1 > 0 & c0 > 0, (e1c1 / c1) / (e1c0 / c0), NA_real_)
-    rrCD <- ifelse(c1 > 0 & c0 > 0, (d1c1 / c1) / (d1c0 / c0), NA_real_)
-    
-    # Calculate bias and related metrics
-    bias <- ifelse(!is.na(rrCD), (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1), NA_real_)
-    absLogBias <- ifelse(!is.na(bias) & bias > 0, abs(log(bias)), NA_real_)
-    ce_strength <- ifelse(!is.na(rrCE), abs(rrCE - 1), NA_real_)
-    cd_strength <- ifelse(!is.na(rrCD), abs(rrCD - 1), NA_real_)
-    
-    # Return results as data.table
-    data.table(
-        code = cova,
-        e1 = e1, e0 = e0, d1 = d1, d0 = d0,
-        c1 = c1, c0 = c0,
-        e1c1 = e1c1, e0c1 = e0c1, e1c0 = e1c0, e0c0 = e0c0,
-        d1c1 = d1c1, d0c1 = d0c1, d1c0 = d1c0, d0c0 = d0c0,
-        pc1 = pc1, pc0 = pc0,
-        rrCE = rrCE, rrCD = rrCD,
-        bias = bias, absLogBias = absLogBias,
-        ce_strength = ce_strength, cd_strength = cd_strength
-    )
-}
-
-
+# Suppress R CMD check warnings for data.table variables
 utils::globalVariables(c(
   ".", ".N", "pid", "exposure", "outcome", "count", "Q1", "Q2", "Q3", 
   "once", "spor", "freq", "value", "code_type", "variable", "n_patients",
@@ -266,8 +177,10 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
 #' @param cova Column name for covariate
 #' @param expo Column name for exposure
 #' @param outc Column name for outcome
-#' @param correction Apply 0.1 correction for zero cells
-#' @return Data table with bias estimates
+#' @param correction Apply 0.1 correction for zero cells (default: TRUE)
+#' @param common_stats Pre-calculated statistics to avoid repeated computation (optional)
+#' @return Data table with bias estimates including contingency table counts, 
+#'         relative risks, bias, and strength metrics
 #' @export
 estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE, common_stats = NULL) {
     setDT(hdpsCohort)
@@ -288,7 +201,7 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE, common_stat
         n <- nrow(hdpsCohort)
     }
     
-    # OPTIMIZED: Use data.table aggregation instead of table() - much faster
+    # Use data.table aggregation for efficient contingency table calculation
     # Single pass to get all contingency table counts
     expo_outc_counts <- hdpsCohort[, .(
         e0c0 = sum((get(expo) == 0) & (get(cova) == 0), na.rm = TRUE),
@@ -361,11 +274,11 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE, common_stat
 #' @param pid Column name for patient ID
 #' @param expo Column name for exposure
 #' @param outc Column name for outcome
-#' @param correction Apply 0.1 correction for zero cells
+#' @param correction Apply 0.1 correction for zero cells (default: TRUE)
 #' @param n_cores Number of cores for parallel processing (NULL for auto-detection)
-#' @param batch_size Batch size for parallel processing
-#' @param progress Show progress bar
-#' @return Data table with bias estimates for all covariates
+#' @param batch_size Batch size for parallel processing (default: 50)
+#' @param progress Show progress bar (default: TRUE)
+#' @return Data table with bias estimates for all covariates, ordered by absolute log bias
 #' @export
 prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL, 
                       batch_size = 50, progress = TRUE) {
@@ -386,13 +299,13 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         n = nrow(dt)
     )
     
-    # OPTIMIZED: Use true parallel processing with parLapply for large datasets
+    # Use parallel processing for large datasets
     if (n_cores > 1 && length(cova) > 10) {
         # Set up parallel cluster with optimized settings
         cl <- parallel::makeCluster(n_cores, type = "PSOCK")
         
         # Export necessary functions and data (minimal set)
-        parallel::clusterExport(cl, c("estBias_optimized"), envir = environment())
+        parallel::clusterExport(cl, c("estBias"), envir = environment())
         parallel::clusterExport(cl, c("common_stats"), envir = environment())
         parallel::clusterExport(cl, "dt", envir = environment())
         
@@ -400,12 +313,12 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         if (progress && requireNamespace("pbapply", quietly = TRUE)) {
             # Use pbapply with cluster for progress bar + parallel processing
             batch_results <- pbapply::pblapply(cova, function(cova_name) {
-                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
+                estBias(dt, cova_name, expo, outc, correction)
             }, cl = cl)
         } else {
             # Use parLapply for true parallel processing without progress bar
             batch_results <- parallel::parLapply(cl, cova, function(cova_name) {
-                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
+                estBias(dt, cova_name, expo, outc, correction)
             })
         }
         
@@ -416,18 +329,18 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         return(rbindlist(batch_results))
         
     } else {
-        # OPTIMIZED: Sequential processing for small datasets or single core
+        # Sequential processing for small datasets or single core
         if (progress && length(cova) > 5) {
             # Use progress bar for sequential execution
             batch_results <- pbapply::pblapply(cova, function(cova_name) {
-                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
+                estBias(dt, cova_name, expo, outc, correction, common_stats)
             }, cl = NULL)
             
             return(rbindlist(batch_results))
         } else {
             # Use individual estBias function for better performance
             batch_results <- lapply(cova, function(cova_name) {
-                estBias_optimized(dt, cova_name, expo, outc, correction, common_stats)
+                estBias(dt, cova_name, expo, outc, correction, common_stats)
             })
             
             return(rbindlist(batch_results))
@@ -528,18 +441,16 @@ plot_bias_vs_prevalence <- function(hdps_result) {
 #' @param code_col Column name for codes
 #' @param exposure_col Column name for exposure
 #' @param outcome_col Column name for outcome
-#' @param type_col Column name for domain type (if multi-domain)
-#' @param master_data Master dataset with exposure and outcome (if separate from data)
-#' @param n_candidates Maximum number of candidates per domain
-#' @param min_patients Minimum number of patients required for a covariate to be considered (filters out rare codes with insufficient sample size)
-#' @param correction Apply correction for rare outcomes
+#' @param type_col Column name for domain type (if multi-domain, optional)
+#' @param master_data Master dataset with exposure and outcome (if separate from data, optional)
+#' @param n_candidates Maximum number of candidates per domain (default: 200)
+#' @param min_patients Minimum number of patients required for a covariate (default: 10)
+#' @param correction Apply correction for rare outcomes (default: TRUE)
 #' @param n_cores Number of cores for parallel processing (NULL for auto-detection)
-#' @param batch_size Batch size for parallel processing
-#' @param progress Show progress bar
-#'
-#' @return Complete HDPS results
+#' @param batch_size Batch size for parallel processing (default: 50)
+#' @param progress Show progress bar (default: TRUE)
+#' @return List containing candidates, recurrence assessment, and prioritization results
 #' @export
-#'
 hdps <- function(data, id_col, code_col, exposure_col, outcome_col, 
                 type_col = NULL, master_data = NULL, n_candidates = 200, min_patients = 10, 
                 correction = TRUE, n_cores = NULL, batch_size = 50, progress = TRUE) {
