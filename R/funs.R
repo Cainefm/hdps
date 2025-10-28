@@ -4,8 +4,8 @@
 #' @importFrom utils write.csv
 #' @importFrom pbapply pblapply
 
-# MATRIX-BASED OPTIMIZED bias estimation function
-estBiasMatrix <- function(hdpsCohort, cova_list, expo, outc, correction = TRUE) {
+# OPTIMIZED batch bias estimation function
+estBiasBatch <- function(hdpsCohort, cova_list, expo, outc, correction = TRUE) {
     setDT(hdpsCohort)
     
     # Pre-calculate totals once for all covariates
@@ -15,75 +15,71 @@ estBiasMatrix <- function(hdpsCohort, cova_list, expo, outc, correction = TRUE) 
     d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
     n <- nrow(hdpsCohort)
     
-    # Convert to matrices for vectorized operations
-    expo_vec <- as.numeric(hdpsCohort[[expo]])
-    outc_vec <- as.numeric(hdpsCohort[[outc]])
-    
-    # Create matrices for all covariates at once
-    cova_matrix <- as.matrix(hdpsCohort[, cova_list, with = FALSE])
-    
-    # VECTORIZED contingency table calculations using matrix operations
-    # This is much faster than individual sum() operations
-    
-    # Exposure-covariate interactions (vectorized across all covariates)
-    e0c0 <- colSums((expo_vec == 0) * (cova_matrix == 0), na.rm = TRUE)
-    e0c1 <- colSums((expo_vec == 0) * (cova_matrix == 1), na.rm = TRUE)
-    e1c0 <- colSums((expo_vec == 1) * (cova_matrix == 0), na.rm = TRUE)
-    e1c1 <- colSums((expo_vec == 1) * (cova_matrix == 1), na.rm = TRUE)
-    
-    # Outcome-covariate interactions (vectorized across all covariates)
-    d0c0 <- colSums((outc_vec == 0) * (cova_matrix == 0), na.rm = TRUE)
-    d0c1 <- colSums((outc_vec == 0) * (cova_matrix == 1), na.rm = TRUE)
-    d1c0 <- colSums((outc_vec == 1) * (cova_matrix == 0), na.rm = TRUE)
-    d1c1 <- colSums((outc_vec == 1) * (cova_matrix == 1), na.rm = TRUE)
-    
-    # VECTORIZED calculations for all covariates at once
-    c1 <- e1c1 + e0c1
-    c0 <- e1c0 + e0c0
-    
-    # Apply correction if needed (vectorized)
-    if (correction) {
-        zero_expo <- (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0)
-        zero_outc <- (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0)
+    # Process all covariates in a single data.table operation
+    results <- rbindlist(lapply(cova_list, function(cova) {
+        # Single pass contingency table calculation
+        expo_outc_counts <- hdpsCohort[, .(
+            e0c0 = sum((get(expo) == 0) & (get(cova) == 0), na.rm = TRUE),
+            e0c1 = sum((get(expo) == 0) & (get(cova) == 1), na.rm = TRUE),
+            e1c0 = sum((get(expo) == 1) & (get(cova) == 0), na.rm = TRUE),
+            e1c1 = sum((get(expo) == 1) & (get(cova) == 1), na.rm = TRUE),
+            d0c0 = sum((get(outc) == 0) & (get(cova) == 0), na.rm = TRUE),
+            d0c1 = sum((get(outc) == 0) & (get(cova) == 1), na.rm = TRUE),
+            d1c0 = sum((get(outc) == 1) & (get(cova) == 0), na.rm = TRUE),
+            d1c1 = sum((get(outc) == 1) & (get(cova) == 1), na.rm = TRUE)
+        )]
         
-        e0c1[zero_expo] <- e0c1[zero_expo] + 0.1
-        e1c1[zero_expo] <- e1c1[zero_expo] + 0.1
-        e0c0[zero_expo] <- e0c0[zero_expo] + 0.1
-        e1c0[zero_expo] <- e1c0[zero_expo] + 0.1
+        # Extract values
+        e0c0 <- expo_outc_counts$e0c0
+        e0c1 <- expo_outc_counts$e0c1
+        e1c0 <- expo_outc_counts$e1c0
+        e1c1 <- expo_outc_counts$e1c1
+        d0c0 <- expo_outc_counts$d0c0
+        d0c1 <- expo_outc_counts$d0c1
+        d1c0 <- expo_outc_counts$d1c0
+        d1c1 <- expo_outc_counts$d1c1
         
-        d0c1[zero_outc] <- d0c1[zero_outc] + 0.1
-        d1c1[zero_outc] <- d1c1[zero_outc] + 0.1
-        d0c0[zero_outc] <- d0c0[zero_outc] + 0.1
-        d1c0[zero_outc] <- d1c0[zero_outc] + 0.1
-    }
+        c1 <- e1c1 + e0c1
+        c0 <- e1c0 + e0c0
+        
+        # Apply correction if needed
+        if (correction) {
+            zero_expo <- (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0)
+            zero_outc <- (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0)
+            
+            if (zero_expo) {
+                e0c1 <- e0c1 + 0.1
+                e1c1 <- e1c1 + 0.1
+                e0c0 <- e0c0 + 0.1
+                e1c0 <- e1c0 + 0.1
+            }
+            if (zero_outc) {
+                d0c1 <- d0c1 + 0.1
+                d1c1 <- d1c1 + 0.1
+                d0c0 <- d0c0 + 0.1
+                d1c0 <- d1c0 + 0.1
+            }
+        }
+        
+        # Calculate metrics
+        pc1 <- c1 / n
+        pc0 <- c0 / n
+        rrCE <- ifelse(c1 > 0 & c0 > 0, (e1c1 / c1) / (e1c0 / c0), NA_real_)
+        rrCD <- ifelse(c1 > 0 & c0 > 0, (d1c1 / c1) / (d1c0 / c0), NA_real_)
+        
+        bias <- ifelse(!is.na(rrCD), (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1), NA_real_)
+        absLogBias <- ifelse(!is.na(bias) & bias > 0, abs(log(bias)), NA_real_)
+        ce_strength <- ifelse(!is.na(rrCE), abs(rrCE - 1), NA_real_)
+        cd_strength <- ifelse(!is.na(rrCD), abs(rrCD - 1), NA_real_)
+        
+        data.table(
+            code = cova, e1, e0, d1, d0, c1, c0,
+            e1c1, e0c1, e1c0, e0c0, d1c1, d0c1, d1c0, d0c0,
+            pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
+        )
+    }))
     
-    # VECTORIZED bias calculations
-    pc1 <- c1 / n
-    pc0 <- c0 / n
-    
-    # Safe division with vectorized operations
-    rrCE <- ifelse(c1 > 0 & c0 > 0, (e1c1 / c1) / (e1c0 / c0), NA_real_)
-    rrCD <- ifelse(c1 > 0 & c0 > 0, (d1c1 / c1) / (d1c0 / c0), NA_real_)
-    
-    # Vectorized bias and strength calculations
-    bias <- ifelse(!is.na(rrCD), (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1), NA_real_)
-    absLogBias <- ifelse(!is.na(bias) & bias > 0, abs(log(bias)), NA_real_)
-    ce_strength <- ifelse(!is.na(rrCE), abs(rrCE - 1), NA_real_)
-    cd_strength <- ifelse(!is.na(rrCD), abs(rrCD - 1), NA_real_)
-    
-    # Create result data.table with all covariates at once
-    result <- data.table(
-        code = cova_list,
-        e1 = rep(e1, length(cova_list)),
-        e0 = rep(e0, length(cova_list)),
-        d1 = rep(d1, length(cova_list)),
-        d0 = rep(d0, length(cova_list)),
-        c1, c0,
-        e1c1, e0c1, e1c0, e0c0, d1c1, d0c1, d1c0, d0c0,
-        pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
-    )
-    
-    result
+    results
 }
 
 # Suppress R CMD check warnings for data.table variables
@@ -376,7 +372,7 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         cl <- parallel::makeCluster(n_cores, type = "PSOCK")
         
         # Export necessary functions and data (minimal set)
-        parallel::clusterExport(cl, c("estBias"), envir = environment())
+        parallel::clusterExport(cl, c("estBiasBatch"), envir = environment())
         
         # Pre-calculate common statistics once to avoid recalculation
         stats <- list(
@@ -400,7 +396,7 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
                 batch_cova <- cova[start_idx:end_idx]
                 
                 # Use MATRIX-BASED function for maximum performance
-                estBiasMatrix(dt, batch_cova, expo, outc, correction)
+                estBiasBatch(dt, batch_cova, expo, outc, correction)
             }, cl = NULL)
             
             # Combine all batch results
@@ -413,7 +409,7 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
                 batch_cova <- cova[start_idx:end_idx]
                 
                 # Use optimized batch function
-                estBiasMatrix(dt, batch_cova, expo, outc, correction)
+                estBiasBatch(dt, batch_cova, expo, outc, correction)
             })
             
             # Combine all batch results
@@ -433,13 +429,13 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
                 end_idx <- min(i * batch_size, length(cova))
                 batch_cova <- cova[start_idx:end_idx]
                 
-                estBiasMatrix(dt, batch_cova, expo, outc, correction)
+                estBiasBatch(dt, batch_cova, expo, outc, correction)
             }, cl = NULL)
             
             return(rbindlist(batch_results))
         } else {
             # Use optimized batch function for better performance
-            return(estBiasMatrix(dt, cova, expo, outc, correction))
+            return(estBiasBatch(dt, cova, expo, outc, correction))
         }
     }
 }
