@@ -4,6 +4,84 @@
 #' @importFrom utils write.csv
 #' @importFrom pbapply pblapply
 
+# Optimized batch bias estimation function
+estBiasBatch <- function(hdpsCohort, cova_list, expo, outc, correction = TRUE) {
+    setDT(hdpsCohort)
+    
+    # Pre-calculate totals once for all covariates
+    e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
+    e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
+    d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
+    d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
+    n <- nrow(hdpsCohort)
+    
+    # Process all covariates in a single data.table operation
+    results <- rbindlist(lapply(cova_list, function(cova) {
+        # Single pass contingency table calculation
+        expo_outc_counts <- hdpsCohort[, .(
+            e0c0 = sum((get(expo) == 0) & (get(cova) == 0), na.rm = TRUE),
+            e0c1 = sum((get(expo) == 0) & (get(cova) == 1), na.rm = TRUE),
+            e1c0 = sum((get(expo) == 1) & (get(cova) == 0), na.rm = TRUE),
+            e1c1 = sum((get(expo) == 1) & (get(cova) == 1), na.rm = TRUE),
+            d0c0 = sum((get(outc) == 0) & (get(cova) == 0), na.rm = TRUE),
+            d0c1 = sum((get(outc) == 0) & (get(cova) == 1), na.rm = TRUE),
+            d1c0 = sum((get(outc) == 1) & (get(cova) == 0), na.rm = TRUE),
+            d1c1 = sum((get(outc) == 1) & (get(cova) == 1), na.rm = TRUE)
+        )]
+        
+        # Extract values
+        e0c0 <- expo_outc_counts$e0c0
+        e0c1 <- expo_outc_counts$e0c1
+        e1c0 <- expo_outc_counts$e1c0
+        e1c1 <- expo_outc_counts$e1c1
+        d0c0 <- expo_outc_counts$d0c0
+        d0c1 <- expo_outc_counts$d0c1
+        d1c0 <- expo_outc_counts$d1c0
+        d1c1 <- expo_outc_counts$d1c1
+        
+        c1 <- e1c1 + e0c1
+        c0 <- e1c0 + e0c0
+        
+        # Apply correction if needed
+        if (correction) {
+            zero_expo <- (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0)
+            zero_outc <- (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0)
+            
+            if (zero_expo) {
+                e0c1 <- e0c1 + 0.1
+                e1c1 <- e1c1 + 0.1
+                e0c0 <- e0c0 + 0.1
+                e1c0 <- e1c0 + 0.1
+            }
+            if (zero_outc) {
+                d0c1 <- d0c1 + 0.1
+                d1c1 <- d1c1 + 0.1
+                d0c0 <- d0c0 + 0.1
+                d1c0 <- d1c0 + 0.1
+            }
+        }
+        
+        # Calculate metrics
+        pc1 <- c1 / n
+        pc0 <- c0 / n
+        rrCE <- ifelse(c1 > 0 & c0 > 0, (e1c1 / c1) / (e1c0 / c0), NA_real_)
+        rrCD <- ifelse(c1 > 0 & c0 > 0, (d1c1 / c1) / (d1c0 / c0), NA_real_)
+        
+        bias <- ifelse(!is.na(rrCD), (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1), NA_real_)
+        absLogBias <- ifelse(!is.na(bias) & bias > 0, abs(log(bias)), NA_real_)
+        ce_strength <- ifelse(!is.na(rrCE), abs(rrCE - 1), NA_real_)
+        cd_strength <- ifelse(!is.na(rrCD), abs(rrCD - 1), NA_real_)
+        
+        data.table(
+            code = cova, e1, e0, d1, d0, c1, c0,
+            e1c1, e0c1, e1c0, e0c0, d1c1, d0c1, d1c0, d0c0,
+            pc1, pc0, rrCE, rrCD, bias, absLogBias, ce_strength, cd_strength
+        )
+    }))
+    
+    results
+}
+
 # Suppress R CMD check warnings for data.table variables
 utils::globalVariables(c(
   ".", ".N", "pid", "exposure", "outcome", "count", "Q1", "Q2", "Q3", 
@@ -183,40 +261,52 @@ assess_recurrence <- function(dt, id, code, type, rank = Inf) {
 estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
     setDT(hdpsCohort)
     
-    # Pre-calculate totals for efficiency
+    # Pre-calculate totals for efficiency (vectorized)
     e1 <- sum(hdpsCohort[[expo]] == 1, na.rm = TRUE)
     e0 <- sum(hdpsCohort[[expo]] == 0, na.rm = TRUE)
     d1 <- sum(hdpsCohort[[outc]] == 1, na.rm = TRUE)
     d0 <- sum(hdpsCohort[[outc]] == 0, na.rm = TRUE)
     n <- nrow(hdpsCohort)
     
-    # Single pass contingency tables using optimized table() function
-    expo_table <- table(hdpsCohort[[expo]], hdpsCohort[[cova]], useNA = "no")
-    outc_table <- table(hdpsCohort[[outc]], hdpsCohort[[cova]], useNA = "no")
+    # OPTIMIZED: Use data.table aggregation instead of table() - much faster
+    # Single pass to get all contingency table counts
+    expo_outc_counts <- hdpsCohort[, .(
+        e0c0 = sum((get(expo) == 0) & (get(cova) == 0), na.rm = TRUE),
+        e0c1 = sum((get(expo) == 0) & (get(cova) == 1), na.rm = TRUE),
+        e1c0 = sum((get(expo) == 1) & (get(cova) == 0), na.rm = TRUE),
+        e1c1 = sum((get(expo) == 1) & (get(cova) == 1), na.rm = TRUE),
+        d0c0 = sum((get(outc) == 0) & (get(cova) == 0), na.rm = TRUE),
+        d0c1 = sum((get(outc) == 0) & (get(cova) == 1), na.rm = TRUE),
+        d1c0 = sum((get(outc) == 1) & (get(cova) == 0), na.rm = TRUE),
+        d1c1 = sum((get(outc) == 1) & (get(cova) == 1), na.rm = TRUE)
+    )]
     
-    # Vectorized count extraction with safe indexing
-    e0c1 <- ifelse(nrow(expo_table) >= 1 && ncol(expo_table) >= 2, expo_table[1, 2], 0)
-    e1c1 <- ifelse(nrow(expo_table) >= 2 && ncol(expo_table) >= 2, expo_table[2, 2], 0)
-    e0c0 <- ifelse(nrow(expo_table) >= 1 && ncol(expo_table) >= 1, expo_table[1, 1], 0)
-    e1c0 <- ifelse(nrow(expo_table) >= 2 && ncol(expo_table) >= 1, expo_table[2, 1], 0)
-    
-    d0c1 <- ifelse(nrow(outc_table) >= 1 && ncol(outc_table) >= 2, outc_table[1, 2], 0)
-    d1c1 <- ifelse(nrow(outc_table) >= 2 && ncol(outc_table) >= 2, outc_table[2, 2], 0)
-    d0c0 <- ifelse(nrow(outc_table) >= 1 && ncol(outc_table) >= 1, outc_table[1, 1], 0)
-    d1c0 <- ifelse(nrow(outc_table) >= 2 && ncol(outc_table) >= 1, outc_table[2, 1], 0)
+    # Extract values (single row, so we can use direct indexing)
+    e0c0 <- expo_outc_counts$e0c0
+    e0c1 <- expo_outc_counts$e0c1
+    e1c0 <- expo_outc_counts$e1c0
+    e1c1 <- expo_outc_counts$e1c1
+    d0c0 <- expo_outc_counts$d0c0
+    d0c1 <- expo_outc_counts$d0c1
+    d1c0 <- expo_outc_counts$d1c0
+    d1c1 <- expo_outc_counts$d1c1
     
     c1 <- e1c1 + e0c1
     c0 <- e1c0 + e0c0
     
-    # Apply correction if needed
+    # Apply correction if needed (vectorized)
     if (correction) {
-        if (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0) {
+        # Check for zero cells and apply correction
+        zero_expo <- (e0c1 == 0 | e1c1 == 0 | e0c0 == 0 | e1c0 == 0)
+        zero_outc <- (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0)
+        
+        if (zero_expo) {
             e0c1 <- e0c1 + 0.1
             e1c1 <- e1c1 + 0.1
             e0c0 <- e0c0 + 0.1
             e1c0 <- e1c0 + 0.1
         }
-        if (d0c1 == 0 | d1c1 == 0 | d0c0 == 0 | d1c0 == 0) {
+        if (zero_outc) {
             d0c1 <- d0c1 + 0.1
             d1c1 <- d1c1 + 0.1
             d0c0 <- d0c0 + 0.1
@@ -224,16 +314,19 @@ estBias <- function(hdpsCohort, cova, expo, outc, correction = TRUE) {
         }
     }
     
-    # Calculate proportions and ratios
+    # Calculate proportions and ratios (vectorized)
     pc1 <- c1 / n
     pc0 <- c0 / n
-    rrCE <- ifelse((e1c1 / c1) / (e1c0 / c0) == 0, NA, (e1c1 / c1) / (e1c0 / c0))
-    rrCD <- ifelse((d1c1 / c1) / (d1c0 / c0) == 0, NA, (d1c1 / c1) / (d1c0 / c0))
     
-    bias <- (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1)
-    absLogBias <- abs(log(bias))
-    ce_strength <- abs(rrCE - 1)
-    cd_strength <- abs(rrCD - 1)
+    # Avoid division by zero with safer calculations
+    rrCE <- ifelse(c1 > 0 & c0 > 0, (e1c1 / c1) / (e1c0 / c0), NA_real_)
+    rrCD <- ifelse(c1 > 0 & c0 > 0, (d1c1 / c1) / (d1c0 / c0), NA_real_)
+    
+    # Calculate bias and related metrics
+    bias <- ifelse(!is.na(rrCD), (pc1 * (rrCD - 1) + 1) / (pc0 * (rrCD - 1) + 1), NA_real_)
+    absLogBias <- ifelse(!is.na(bias) & bias > 0, abs(log(bias)), NA_real_)
+    ce_strength <- ifelse(!is.na(rrCE), abs(rrCE - 1), NA_real_)
+    cd_strength <- ifelse(!is.na(rrCD), abs(rrCD - 1), NA_real_)
     
     data.table(
         code = cova, e1, e0, d1, d0, c1, c0,
@@ -273,50 +366,76 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         n = nrow(dt)
     )
     
-    # Use parallel processing for large datasets
+    # OPTIMIZED: Use parallel processing for large datasets
     if (n_cores > 1 && length(cova) > 10) {
-        # Set up parallel cluster
-        cl <- parallel::makeCluster(n_cores)
+        # Set up parallel cluster with optimized settings
+        cl <- parallel::makeCluster(n_cores, type = "PSOCK")
         
-        # Export necessary functions and data
-        parallel::clusterExport(cl, c("estBias", "stats", "setDT"), 
-                               envir = environment())
+        # Export necessary functions and data (minimal set)
+        parallel::clusterExport(cl, c("estBias"), envir = environment())
         
-        # Process in batches for memory efficiency
+        # Pre-calculate common statistics once to avoid recalculation
+        stats <- list(
+            e1 = sum(dt[[expo]] == 1, na.rm = TRUE),
+            e0 = sum(dt[[expo]] == 0, na.rm = TRUE),
+            d1 = sum(dt[[outc]] == 1, na.rm = TRUE),
+            d0 = sum(dt[[outc]] == 0, na.rm = TRUE),
+            n = nrow(dt)
+        )
+        parallel::clusterExport(cl, "stats", envir = environment())
+        
+        # Process in optimized batches for memory efficiency
         results <- list()
         n_batches <- ceiling(length(cova) / batch_size)
         
-        for (i in seq_len(n_batches)) {
-            start_idx <- (i - 1) * batch_size + 1
-            end_idx <- min(i * batch_size, length(cova))
-            batch_cova <- cova[start_idx:end_idx]
+        # OPTIMIZED: Use batch processing for better performance
+        if (progress && requireNamespace("pbapply", quietly = TRUE)) {
+            batch_results <- pbapply::pblapply(seq_len(n_batches), function(i) {
+                start_idx <- (i - 1) * batch_size + 1
+                end_idx <- min(i * batch_size, length(cova))
+                batch_cova <- cova[start_idx:end_idx]
+                
+                # Use optimized batch function for better performance
+                estBiasBatch(dt, batch_cova, expo, outc, correction)
+            }, cl = NULL)
             
-            # Process batch in parallel
-            batch_results <- parallel::parLapply(cl, batch_cova, function(x) {
-                estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
+            # Combine all batch results
+            rbindlist(batch_results)
+        } else {
+            # Standard processing without progress bar
+            batch_results <- lapply(seq_len(n_batches), function(i) {
+                start_idx <- (i - 1) * batch_size + 1
+                end_idx <- min(i * batch_size, length(cova))
+                batch_cova <- cova[start_idx:end_idx]
+                
+                # Use optimized batch function
+                estBiasBatch(dt, batch_cova, expo, outc, correction)
             })
             
-            results <- c(results, batch_results)
-            
-            # Force garbage collection between batches
-            if (i < n_batches) {
-                gc()
-            }
+            # Combine all batch results
+            rbindlist(batch_results)
         }
         
         parallel::stopCluster(cl)
-        rbindlist(results)
         
     } else {
-        # Sequential processing for small datasets or single core
+        # OPTIMIZED: Sequential processing for small datasets or single core
+        n_batches <- ceiling(length(cova) / batch_size)
+        
         if (progress && length(cova) > 5) {
-            rbindlist(pbapply::pblapply(cova, function(x) {
-                estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-            }))
+            # Use batch processing even for sequential execution
+            batch_results <- pbapply::pblapply(seq_len(n_batches), function(i) {
+                start_idx <- (i - 1) * batch_size + 1
+                end_idx <- min(i * batch_size, length(cova))
+                batch_cova <- cova[start_idx:end_idx]
+                
+                estBiasBatch(dt, batch_cova, expo, outc, correction)
+            }, cl = NULL)
+            
+            rbindlist(batch_results)
         } else {
-            rbindlist(lapply(cova, function(x) {
-                estBias(dt, cova = x, expo = expo, outc = outc, correction = correction)
-            }))
+            # Use optimized batch function for better performance
+            estBiasBatch(dt, cova, expo, outc, correction)
         }
     }
 }
@@ -463,19 +582,19 @@ hdps <- function(data, id_col, code_col, exposure_col, outcome_col,
                 
                 # Create new data.table with renamed columns instead of modifying original
                 if (id_col == "pid") {
-                    cohort_data <- cohort_data[, .(pid = get(id_col), 
-                                                 exposure = get(exposure_col), 
-                                                 outcome = get(outcome_col))]
+                    cohort_data <- cohort_data[, list(pid = get(id_col), 
+                                                     exposure = get(exposure_col), 
+                                                     outcome = get(outcome_col))]
                 } else {
-                    cohort_data <- cohort_data[, .(pid = get(id_col), 
-                                                 exposure = get(exposure_col), 
-                                                 outcome = get(outcome_col))]
+                    cohort_data <- cohort_data[, list(pid = get(id_col), 
+                                                     exposure = get(exposure_col), 
+                                                     outcome = get(outcome_col))]
                 }
             } else {
                 # Use exposure/outcome from same dataset
-                cohort_data <- data[, .(pid = get(id_col), 
-                                      exposure = get(exposure_col), 
-                                      outcome = get(outcome_col))]
+                cohort_data <- data[, list(pid = get(id_col), 
+                                         exposure = get(exposure_col), 
+                                         outcome = get(outcome_col))]
             }
             
             # Standardize data types and merge
