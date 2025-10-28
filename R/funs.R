@@ -311,12 +311,12 @@ prioritize <- function(dt, pid, expo, outc, correction = TRUE, n_cores = NULL,
         if (progress && requireNamespace("pbapply", quietly = TRUE)) {
             # Use pbapply with cluster for progress bar + parallel processing
             batch_results <- pbapply::pblapply(cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction)
+                estBias(dt, cova_name, expo, outc, correction, common_stats)
             }, cl = cl)
         } else {
             # Use parLapply for true parallel processing without progress bar
             batch_results <- parallel::parLapply(cl, cova, function(cova_name) {
-                estBias(dt, cova_name, expo, outc, correction)
+                estBias(dt, cova_name, expo, outc, correction, common_stats)
             })
         }
         
